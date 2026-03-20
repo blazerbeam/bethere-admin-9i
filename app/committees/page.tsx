@@ -195,6 +195,39 @@ const committees: Committee[] = [
   { name: "Run Club" },
 ]
 
+// Calculate gap stats for an item
+function getItemGapStats(item: CommitteeItem) {
+  if (!item.slots) return { total: 0, open: 0, needsSupport: 0 }
+  
+  const total = item.slots.length
+  const open = item.slots.filter(s => s.volunteers.length === 0).length
+  const needsSupport = item.slots.filter(s => s.needsMore && s.volunteers.length > 0).length
+  
+  return { total, open, needsSupport }
+}
+
+// Sort items by urgency: open first, then needs support, then covered
+function sortItemsByNeed(items: CommitteeItem[]): CommitteeItem[] {
+  return [...items].sort((a, b) => {
+    const statsA = getItemGapStats(a)
+    const statsB = getItemGapStats(b)
+    
+    // Open slots are highest priority
+    if (statsA.open > 0 && statsB.open === 0) return -1
+    if (statsB.open > 0 && statsA.open === 0) return 1
+    
+    // Then needs support
+    if (statsA.needsSupport > 0 && statsB.needsSupport === 0) return -1
+    if (statsB.needsSupport > 0 && statsA.needsSupport === 0) return 1
+    
+    // Sort by severity within same category
+    if (statsA.open !== statsB.open) return statsB.open - statsA.open
+    if (statsA.needsSupport !== statsB.needsSupport) return statsB.needsSupport - statsA.needsSupport
+    
+    return 0
+  })
+}
+
 function ItemTypeIcon({ type }: { type: "event" | "role" | "program" }) {
   switch (type) {
     case "event":
@@ -204,6 +237,30 @@ function ItemTypeIcon({ type }: { type: "event" | "role" | "program" }) {
     case "program":
       return <BookOpen className="h-4 w-4 text-emerald-600" />
   }
+}
+
+function GapSummary({ item }: { item: CommitteeItem }) {
+  const { open, needsSupport } = getItemGapStats(item)
+  
+  if (open === 0 && needsSupport === 0) return null
+  
+  return (
+    <div className="flex items-center gap-3 text-xs">
+      {needsSupport > 0 && (
+        <span className="text-amber-600 font-medium">
+          {needsSupport} need{needsSupport === 1 ? 's' : ''} support
+        </span>
+      )}
+      {needsSupport > 0 && open > 0 && (
+        <span className="text-muted-foreground">•</span>
+      )}
+      {open > 0 && (
+        <span className="text-red-600 font-medium">
+          {open} open
+        </span>
+      )}
+    </div>
+  )
 }
 
 function SlotDisplay({ slot }: { slot: Slot }) {
@@ -287,6 +344,9 @@ function ItemSection({ type, items }: { type: "event" | "role" | "program", item
     program: "Programs"
   }
 
+  // Sort items by need within each section
+  const sortedItems = sortItemsByNeed(items)
+
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
@@ -297,9 +357,12 @@ function ItemSection({ type, items }: { type: "event" | "role" | "program", item
       </div>
       
       <div className="space-y-4">
-        {items.map((item, idx) => (
+        {sortedItems.map((item, idx) => (
           <div key={idx}>
-            <h4 className="font-medium text-sm mb-3 text-foreground">{item.name}</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-medium text-sm text-foreground">{item.name}</h4>
+              <GapSummary item={item} />
+            </div>
             
             {item.slots && item.slots.length > 0 && (
               <div className="space-y-3">
