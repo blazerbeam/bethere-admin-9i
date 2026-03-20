@@ -206,20 +206,6 @@ function ItemTypeIcon({ type }: { type: "event" | "role" | "program" }) {
   }
 }
 
-function ItemTypeBadge({ type }: { type: "event" | "role" | "program" }) {
-  const variants: Record<string, string> = {
-    event: "bg-blue-50 text-blue-700 border-blue-200",
-    role: "bg-amber-50 text-amber-700 border-amber-200",
-    program: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  }
-  
-  return (
-    <Badge variant="outline" className={`text-xs capitalize ${variants[type]}`}>
-      {type}
-    </Badge>
-  )
-}
-
 function SlotDisplay({ slot }: { slot: Slot }) {
   const hasVolunteers = slot.volunteers.length > 0
   const leads = slot.volunteers.filter(v => v.role === "lead")
@@ -227,64 +213,118 @@ function SlotDisplay({ slot }: { slot: Slot }) {
   const supporters = slot.volunteers.filter(v => v.role === "support")
   const unroledVolunteers = slot.volunteers.filter(v => !v.role)
 
+  const isOpen = !hasVolunteers
+  const needsSupport = slot.needsMore && hasVolunteers
+
   return (
-    <li className="text-sm">
-      <div className="flex items-start gap-2">
-        <span className="text-muted-foreground font-medium">{slot.name}</span>
-        {!hasVolunteers && (
-          <Badge 
-            variant="outline"
-            className="text-xs border-orange-300 text-orange-600 bg-orange-50"
-          >
-            Open
-          </Badge>
-        )}
-        {slot.needsMore && hasVolunteers && (
-          <Badge 
-            variant="outline"
-            className="text-xs border-amber-300 text-amber-600 bg-amber-50"
-          >
-            Needs support
-          </Badge>
-        )}
+    <div className="rounded-md border border-border/60 bg-background p-3">
+      <div className="flex items-center justify-between gap-3">
+        <span className="font-semibold text-sm">{slot.name}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          {isOpen && (
+            <Badge 
+              variant="outline"
+              className="text-xs border-red-200 text-red-600 bg-red-50 font-medium"
+            >
+              Open
+            </Badge>
+          )}
+          {needsSupport && (
+            <Badge 
+              variant="outline"
+              className="text-xs border-amber-300 text-amber-700 bg-amber-50 font-medium"
+            >
+              Needs support
+            </Badge>
+          )}
+        </div>
       </div>
       
       {hasVolunteers && (
-        <div className="mt-1 ml-4 space-y-0.5">
+        <div className="mt-2 space-y-1 text-sm">
           {coLeads.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Co-Leads:</span>
-              <span className="text-sm">{coLeads.map(v => v.name).join(", ")}</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xs text-muted-foreground uppercase tracking-wide w-16 shrink-0">Co-leads</span>
+              <span>{coLeads.map(v => v.name).join(", ")}</span>
             </div>
           )}
           {leads.length > 0 && (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">Lead:</span>
-              <span className="text-sm">{leads.map(v => v.name).join(", ")}</span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xs text-muted-foreground uppercase tracking-wide w-16 shrink-0">Lead</span>
+              <span>{leads.map(v => v.name).join(", ")}</span>
             </div>
           )}
           {supporters.length > 0 && (
-            <div className="flex items-start gap-2">
-              <span className="text-xs text-muted-foreground">Support:</span>
-              <span className="text-sm text-muted-foreground">
-                {supporters.map(v => v.name).join(", ")}
-              </span>
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-xs text-muted-foreground uppercase tracking-wide w-16 shrink-0">Support</span>
+              <span className="text-muted-foreground">{supporters.map(v => v.name).join(", ")}</span>
             </div>
           )}
           {unroledVolunteers.length > 0 && (
-            <div className="text-sm">
+            <div className="text-muted-foreground">
               {unroledVolunteers.map(v => v.name).join(", ")}
             </div>
           )}
         </div>
       )}
-    </li>
+    </div>
+  )
+}
+
+function ItemSection({ type, items }: { type: "event" | "role" | "program", items: CommitteeItem[] }) {
+  if (items.length === 0) return null
+  
+  const labels: Record<string, string> = {
+    event: "Events",
+    role: "Roles",
+    program: "Programs"
+  }
+
+  const bgColors: Record<string, string> = {
+    event: "bg-blue-50/50 border-blue-100",
+    role: "bg-amber-50/50 border-amber-100",
+    program: "bg-emerald-50/50 border-emerald-100"
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <ItemTypeIcon type={type} />
+        <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+          {labels[type]}
+        </span>
+      </div>
+      
+      <div className="space-y-4">
+        {items.map((item, idx) => (
+          <div key={idx} className={`rounded-lg border p-4 ${bgColors[type]}`}>
+            <h4 className="font-medium text-sm mb-3">{item.name}</h4>
+            
+            {item.slots && item.slots.length > 0 && (
+              <div className="space-y-2">
+                {item.slots.map((slot, slotIdx) => (
+                  <SlotDisplay key={slotIdx} slot={slot} />
+                ))}
+              </div>
+            )}
+            
+            {item.description && (
+              <p className="text-sm text-muted-foreground">{item.description}</p>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
 
 function CommitteeRow({ committee }: { committee: Committee }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const hasItems = committee.items && committee.items.length > 0
+
+  const events = committee.items?.filter(i => i.type === "event") || []
+  const roles = committee.items?.filter(i => i.type === "role") || []
+  const programs = committee.items?.filter(i => i.type === "program") || []
 
   return (
     <li>
@@ -306,30 +346,12 @@ function CommitteeRow({ committee }: { committee: Committee }) {
       </button>
       
       {isExpanded && committee.items && (
-        <div className="border-t bg-muted/30 px-6 py-3">
-          <ul className="space-y-3">
-            {committee.items.map((item, idx) => (
-              <li key={idx} className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <ItemTypeIcon type={item.type} />
-                  <span className="text-sm font-medium">{item.name}</span>
-                  <ItemTypeBadge type={item.type} />
-                </div>
-                
-                {item.slots && (
-                  <ul className="ml-6 space-y-3">
-                    {item.slots.map((slot, slotIdx) => (
-                      <SlotDisplay key={slotIdx} slot={slot} />
-                    ))}
-                  </ul>
-                )}
-                
-                {item.description && (
-                  <p className="ml-6 text-sm text-muted-foreground">{item.description}</p>
-                )}
-              </li>
-            ))}
-          </ul>
+        <div className="border-t bg-muted/20 px-6 py-5">
+          <div className="space-y-6">
+            <ItemSection type="role" items={roles} />
+            <ItemSection type="event" items={events} />
+            <ItemSection type="program" items={programs} />
+          </div>
         </div>
       )}
     </li>
