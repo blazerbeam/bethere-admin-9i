@@ -4,7 +4,7 @@ import { useState } from "react"
 import { AdminLayout } from "@/components/admin-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ChevronRight, ChevronDown, Calendar, Users, BookOpen, MoreHorizontal, Copy, Sparkles, Tags, ListTodo, UserPlus, Mail, Plus, X, ExternalLink, User } from "lucide-react"
+import { ChevronRight, ChevronDown, Calendar, Users, BookOpen, MoreHorizontal, Copy, Sparkles, Tags, ListTodo, UserPlus, Mail, Plus, X, ExternalLink, User, Crown, DollarSign, Megaphone, GraduationCap, Heart, TreePine } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,7 +62,55 @@ interface Committee {
   name: string
   items?: CommitteeItem[]
   tags?: string[]
+  category?: "classroom" | "events" | "programs" | "fundraising" | "operations"
 }
+
+interface BoardRole {
+  title: string
+  assignee: string | null
+  interested?: InterestedPerson[]
+}
+
+// Board Leadership Data
+const boardRoles: BoardRole[] = [
+  { 
+    title: "President", 
+    assignee: "Sarah Mitchell",
+    interested: []
+  },
+  { 
+    title: "Vice President", 
+    assignee: "David Chen",
+    interested: [
+      { name: "Amanda Foster", interest: "lead" }
+    ]
+  },
+  { 
+    title: "Treasurer", 
+    assignee: "Jennifer Mozinski",
+    interested: []
+  },
+  { 
+    title: "Secretary", 
+    assignee: null,
+    interested: [
+      { name: "Priya Raman", interest: "lead" },
+      { name: "Kate Vance", interest: "general" }
+    ]
+  },
+  { 
+    title: "Communications", 
+    assignee: "Stephanie Knight",
+    interested: []
+  },
+  { 
+    title: "Fundraising Chair", 
+    assignee: null,
+    interested: [
+      { name: "Maria Santos", interest: "lead" }
+    ]
+  },
+]
 
 // Sample data for parent involvement across the system
 const parentInvolvement: Record<string, {
@@ -109,28 +157,36 @@ const parentInvolvement: Record<string, {
     interests: [
       { committee: "Classroom Parent Leader", item: "Room Parent - 4th Grade Wright", type: "support" }
     ]
+  },
+  "Sarah Mitchell": {
+    committees: [
+      { name: "Board", role: "President", item: "PTO Board" }
+    ],
+    events: [],
+    interests: []
+  },
+  "David Chen": {
+    committees: [
+      { name: "Board", role: "Vice President", item: "PTO Board" }
+    ],
+    events: [],
+    interests: []
+  },
+  "Priya Raman": {
+    committees: [],
+    events: [],
+    interests: [
+      { committee: "Board", item: "Secretary", type: "lead" }
+    ]
   }
 }
 
 const committees: Committee[] = [
-  {
-    name: "Fun Run",
-    tags: ["fundraiser", "outdoor", "spring"],
-    items: [
-      { type: "event", name: "Annual Fun Run" }
-    ]
-  },
-  {
-    name: "Book Fair",
-    tags: ["fundraiser", "literacy"],
-    items: [
-      { type: "event", name: "Fall Book Fair" },
-      { type: "event", name: "Spring Book Fair" }
-    ]
-  },
+  // Classroom Roles
   {
     name: "Classroom Parent Leader",
     tags: ["year-round", "classroom"],
+    category: "classroom",
     items: [
       { 
         type: "role", 
@@ -233,6 +289,7 @@ const committees: Committee[] = [
   {
     name: "Classroom Photographers",
     tags: ["year-round", "classroom"],
+    category: "classroom",
     items: [
       {
         type: "role",
@@ -268,9 +325,37 @@ const committees: Committee[] = [
       }
     ]
   },
+  // School Events
+  {
+    name: "Fun Run",
+    tags: ["fundraiser", "outdoor", "spring"],
+    category: "events",
+    items: [
+      { type: "event", name: "Annual Fun Run" }
+    ]
+  },
+  {
+    name: "Book Fair",
+    tags: ["fundraiser", "literacy"],
+    category: "events",
+    items: [
+      { type: "event", name: "Fall Book Fair" },
+      { type: "event", name: "Spring Book Fair" }
+    ]
+  },
+  { name: "Carnival", tags: ["event", "spring"], category: "events" },
+  { name: "Multi Cultural", tags: ["event", "community"], category: "events" },
+  { name: "5th Grade Celebration + Fundraiser", tags: ["event", "5th-grade"], category: "events" },
+  { name: "Family Night", tags: ["event", "community"], category: "events" },
+  { name: "Field Day", tags: ["event", "outdoor", "spring"], category: "events" },
+  { name: "Science Fair / Art Showcase", tags: ["event", "enrichment"], category: "events" },
+  { name: "Spring Dance Party", tags: ["event", "spring"], category: "events" },
+  { name: "Talent Showcase", tags: ["event", "enrichment"], category: "events" },
+  // Programs
   {
     name: "Art Literacy",
     tags: ["enrichment", "classroom"],
+    category: "programs",
     items: [
       {
         type: "program",
@@ -279,28 +364,51 @@ const committees: Committee[] = [
       }
     ]
   },
-  { name: "Carnival", tags: ["event", "spring"] },
-  { name: "Multi Cultural", tags: ["event", "community"] },
-  { name: "5th Grade Celebration + Fundraiser", tags: ["event", "5th-grade"] },
-  { name: "Family Night", tags: ["event", "community"] },
-  { name: "Falcon Outreach", tags: ["community"] },
-  { name: "Field Day", tags: ["event", "outdoor", "spring"] },
-  { name: "First Day School Supplies", tags: ["service", "fall"] },
-  { name: "Foundation Fundraising", tags: ["fundraiser"] },
-  { name: "Oregon Battle of the Books", tags: ["enrichment", "literacy"] },
-  { name: "PTO Sponsorships", tags: ["fundraiser"] },
-  { name: "Round Up / Auction", tags: ["fundraiser", "event"] },
-  { name: "Science Fair / Art Showcase", tags: ["event", "enrichment"] },
-  { name: "Summer Kindergarten Playdates", tags: ["community", "summer"] },
-  { name: "Spring Dance Party", tags: ["event", "spring"] },
-  { name: "Holiday Scrip", tags: ["fundraiser"] },
-  { name: "Staff & Teacher Appreciation", tags: ["service"] },
-  { name: "Talent Showcase", tags: ["event", "enrichment"] },
-  { name: "Three Bees Garden", tags: ["enrichment", "outdoor"] },
-  { name: "Volunteer Coordinator", tags: ["operations"] },
-  { name: "Yearbook", tags: ["year-round"] },
-  { name: "Run Club", tags: ["enrichment", "outdoor"] },
+  { name: "Oregon Battle of the Books", tags: ["enrichment", "literacy"], category: "programs" },
+  { name: "Three Bees Garden", tags: ["enrichment", "outdoor"], category: "programs" },
+  { name: "Run Club", tags: ["enrichment", "outdoor"], category: "programs" },
+  { name: "Summer Kindergarten Playdates", tags: ["community", "summer"], category: "programs" },
+  // Fundraising
+  { name: "Foundation Fundraising", tags: ["fundraiser"], category: "fundraising" },
+  { name: "PTO Sponsorships", tags: ["fundraiser"], category: "fundraising" },
+  { name: "Round Up / Auction", tags: ["fundraiser", "event"], category: "fundraising" },
+  { name: "Holiday Scrip", tags: ["fundraiser"], category: "fundraising" },
+  // Operations & Service
+  { name: "Falcon Outreach", tags: ["community"], category: "operations" },
+  { name: "First Day School Supplies", tags: ["service", "fall"], category: "operations" },
+  { name: "Staff & Teacher Appreciation", tags: ["service"], category: "operations" },
+  { name: "Volunteer Coordinator", tags: ["operations"], category: "operations" },
+  { name: "Yearbook", tags: ["year-round"], category: "operations" },
 ]
+
+// Category configuration
+const categoryConfig: Record<string, { label: string; icon: typeof Users; description: string }> = {
+  classroom: { 
+    label: "Classroom Roles", 
+    icon: GraduationCap,
+    description: "Parent leaders and photographers for each classroom"
+  },
+  events: { 
+    label: "School Events", 
+    icon: Calendar,
+    description: "Annual and seasonal school-wide events"
+  },
+  programs: { 
+    label: "Programs & Enrichment", 
+    icon: TreePine,
+    description: "Ongoing enrichment and community programs"
+  },
+  fundraising: { 
+    label: "Fundraising", 
+    icon: DollarSign,
+    description: "Revenue-generating activities and campaigns"
+  },
+  operations: { 
+    label: "Operations & Service", 
+    icon: Heart,
+    description: "Behind-the-scenes support and appreciation"
+  },
+}
 
 // Calculate gap stats for an item - ONLY based on assignments, not interested
 function getItemGapStats(item: CommitteeItem) {
@@ -1267,6 +1375,200 @@ function CommitteeRow({
   )
 }
 
+// Board Leadership Section
+function BoardLeadershipSection({ 
+  onParentClick 
+}: { 
+  onParentClick: (name: string) => void 
+}) {
+  const openRoles = boardRoles.filter(r => !r.assignee).length
+  const totalInterested = boardRoles.reduce((acc, r) => acc + (r.interested?.length || 0), 0)
+
+  return (
+    <Card className="mb-8 border-2 border-primary/10 bg-gradient-to-br from-background to-primary/5">
+      <CardHeader className="pb-4">
+        <div className="flex items-center gap-3">
+          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+            <Crown className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <CardTitle className="text-lg">Board Leadership</CardTitle>
+            <CardDescription>
+              {openRoles > 0 ? (
+                <span className="flex items-center gap-2">
+                  <span className="text-red-600 font-medium">{openRoles} open position{openRoles !== 1 ? 's' : ''}</span>
+                  {totalInterested > 0 && (
+                    <>
+                      <span>•</span>
+                      <span>{totalInterested} interested</span>
+                    </>
+                  )}
+                </span>
+              ) : (
+                "All positions filled"
+              )}
+            </CardDescription>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {boardRoles.map((role) => {
+            const isOpen = !role.assignee
+            const hasInterested = role.interested && role.interested.length > 0
+            
+            return (
+              <div 
+                key={role.title}
+                className={`rounded-lg border p-4 transition-colors ${
+                  isOpen 
+                    ? "bg-red-50/60 border-red-200" 
+                    : "bg-background border-border/60"
+                }`}
+              >
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <h4 className="font-semibold text-sm">{role.title}</h4>
+                  {isOpen && (
+                    <Badge 
+                      variant="outline"
+                      className="text-xs border-red-300 text-red-700 bg-red-100 font-semibold shrink-0"
+                    >
+                      Open
+                    </Badge>
+                  )}
+                </div>
+                
+                {role.assignee ? (
+                  <div className="text-sm">
+                    <ParentName 
+                      name={role.assignee} 
+                      onParentClick={onParentClick}
+                    />
+                  </div>
+                ) : (
+                  <div className="text-sm text-muted-foreground">
+                    No one assigned
+                  </div>
+                )}
+
+                {/* Interested candidates */}
+                {hasInterested && (
+                  <div className="mt-3 pt-3 border-t border-dashed border-muted-foreground/20">
+                    <div className="text-[11px] uppercase tracking-wide text-muted-foreground/70 font-medium mb-2">
+                      Interested
+                    </div>
+                    <div className="space-y-1.5">
+                      {role.interested!.map((person, i) => (
+                        <div 
+                          key={i}
+                          className="flex items-center justify-between gap-2 p-2 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors group/interested"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <ParentName 
+                              name={person.name} 
+                              className="text-sm truncate"
+                              onParentClick={onParentClick}
+                            />
+                            {person.interest === "lead" && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-blue-100 text-blue-700 border-blue-200">
+                                Lead
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-1 opacity-0 group-hover/interested:opacity-100 transition-opacity">
+                            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1">
+                              <UserPlus className="h-3 w-3" />
+                              <span className="hidden sm:inline">Assign</span>
+                            </Button>
+                            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs">
+                              <Mail className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+// Committee Category Section
+function CommitteeCategorySection({ 
+  category,
+  committees,
+  onOpenDetail,
+  onParentClick 
+}: { 
+  category: string
+  committees: Committee[]
+  onOpenDetail: (committee: Committee) => void
+  onParentClick: (name: string) => void 
+}) {
+  const config = categoryConfig[category]
+  if (!config || committees.length === 0) return null
+
+  const Icon = config.icon
+
+  // Calculate category-level stats
+  let totalOpen = 0
+  let totalNeedsSupport = 0
+  for (const committee of committees) {
+    const stats = getCommitteeGapStats(committee)
+    totalOpen += stats.open
+    totalNeedsSupport += stats.needsSupport
+  }
+
+  return (
+    <div className="mb-8">
+      <div className="flex items-center gap-3 mb-4 px-2">
+        <div className="h-8 w-8 rounded-md bg-muted flex items-center justify-center">
+          <Icon className="h-4 w-4 text-muted-foreground" />
+        </div>
+        <div className="flex-1">
+          <h3 className="font-semibold text-base">{config.label}</h3>
+          <p className="text-xs text-muted-foreground">{config.description}</p>
+        </div>
+        {(totalOpen > 0 || totalNeedsSupport > 0) && (
+          <div className="flex items-center gap-2 text-xs">
+            {totalOpen > 0 && (
+              <Badge variant="outline" className="border-red-300 text-red-700 bg-red-50">
+                {totalOpen} open
+              </Badge>
+            )}
+            {totalNeedsSupport > 0 && (
+              <Badge variant="outline" className="border-amber-300 text-amber-700 bg-amber-50">
+                {totalNeedsSupport} need support
+              </Badge>
+            )}
+          </div>
+        )}
+      </div>
+      
+      <Card>
+        <CardContent className="p-0">
+          <ul className="divide-y divide-border">
+            {committees.map((committee) => (
+              <CommitteeRow 
+                key={committee.name} 
+                committee={committee}
+                onOpenDetail={onOpenDetail}
+                onParentClick={onParentClick}
+              />
+            ))}
+          </ul>
+        </CardContent>
+      </Card>
+    </div>
+  )
+}
+
 export default function CommitteesPage() {
   const [selectedCommittee, setSelectedCommittee] = useState<Committee | null>(null)
   const [committeeDetailOpen, setCommitteeDetailOpen] = useState(false)
@@ -1283,31 +1585,58 @@ export default function CommitteesPage() {
     setParentProfileOpen(true)
   }
 
+  // Group committees by category
+  const committeesByCategory = {
+    classroom: committees.filter(c => c.category === "classroom"),
+    events: committees.filter(c => c.category === "events"),
+    programs: committees.filter(c => c.category === "programs"),
+    fundraising: committees.filter(c => c.category === "fundraising"),
+    operations: committees.filter(c => c.category === "operations"),
+  }
+
   return (
     <AdminLayout 
       title="Committees" 
-      description="Manage your PTO committees and their members."
+      description="Manage PTO leadership, committees, and volunteer roles."
     >
-      <Card>
-        <CardHeader>
-          <CardTitle>All Committees</CardTitle>
-          <CardDescription>
-            {committees.length} committees for Forest Hills PTO activities.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          <ul className="divide-y divide-border">
-            {committees.map((committee) => (
-              <CommitteeRow 
-                key={committee.name} 
-                committee={committee}
-                onOpenDetail={handleOpenDetail}
-                onParentClick={handleParentClick}
-              />
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
+      {/* Board Leadership Section */}
+      <BoardLeadershipSection onParentClick={handleParentClick} />
+
+      {/* Categorized Committees */}
+      <CommitteeCategorySection 
+        category="classroom"
+        committees={committeesByCategory.classroom}
+        onOpenDetail={handleOpenDetail}
+        onParentClick={handleParentClick}
+      />
+      
+      <CommitteeCategorySection 
+        category="events"
+        committees={committeesByCategory.events}
+        onOpenDetail={handleOpenDetail}
+        onParentClick={handleParentClick}
+      />
+      
+      <CommitteeCategorySection 
+        category="programs"
+        committees={committeesByCategory.programs}
+        onOpenDetail={handleOpenDetail}
+        onParentClick={handleParentClick}
+      />
+      
+      <CommitteeCategorySection 
+        category="fundraising"
+        committees={committeesByCategory.fundraising}
+        onOpenDetail={handleOpenDetail}
+        onParentClick={handleParentClick}
+      />
+      
+      <CommitteeCategorySection 
+        category="operations"
+        committees={committeesByCategory.operations}
+        onOpenDetail={handleOpenDetail}
+        onParentClick={handleParentClick}
+      />
 
       {/* Committee Detail Sheet */}
       <CommitteeDetailSheet 
