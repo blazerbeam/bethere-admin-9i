@@ -1,10 +1,10 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { AdminLayout } from "@/components/admin-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ChevronRight, ChevronDown, Calendar, Users, BookOpen, MoreHorizontal, Copy, Sparkles, Tags, ListTodo, UserPlus, Mail, Plus, X, ExternalLink, User, Crown, DollarSign, Megaphone, GraduationCap, Heart, TreePine } from "lucide-react"
+import { ChevronRight, ChevronDown, Calendar, Users, BookOpen, MoreHorizontal, Copy, Sparkles, Tags, ListTodo, UserPlus, Mail, Plus, X, ExternalLink, User, Crown, DollarSign, Megaphone, GraduationCap, Heart, TreePine, AlertTriangle, Eye, EyeOff, Star, Clock, CheckCircle2, ArrowRight } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,6 +33,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Separator } from "@/components/ui/separator"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Toggle } from "@/components/ui/toggle"
 
 interface Volunteer {
   name: string
@@ -42,6 +43,7 @@ interface Volunteer {
 interface InterestedPerson {
   name: string
   interest?: "lead" | "support" | "general"
+  tags?: ("frequent" | "new-parent" | "previously-assigned")[]
 }
 
 interface Slot {
@@ -69,6 +71,7 @@ interface BoardRole {
   title: string
   assignee: string | null
   interested?: InterestedPerson[]
+  needsSuccessor?: boolean
 }
 
 // Board Leadership Data
@@ -76,13 +79,16 @@ const boardRoles: BoardRole[] = [
   { 
     title: "President", 
     assignee: "Sarah Mitchell",
-    interested: []
+    needsSuccessor: true,
+    interested: [
+      { name: "David Chen", interest: "lead", tags: ["frequent"] }
+    ]
   },
   { 
     title: "Vice President", 
     assignee: "David Chen",
     interested: [
-      { name: "Amanda Foster", interest: "lead" }
+      { name: "Amanda Foster", interest: "lead", tags: ["frequent"] }
     ]
   },
   { 
@@ -94,8 +100,8 @@ const boardRoles: BoardRole[] = [
     title: "Secretary", 
     assignee: null,
     interested: [
-      { name: "Priya Raman", interest: "lead" },
-      { name: "Kate Vance", interest: "general" }
+      { name: "Priya Raman", interest: "lead", tags: ["new-parent"] },
+      { name: "Kate Vance", interest: "general", tags: ["frequent", "previously-assigned"] }
     ]
   },
   { 
@@ -107,7 +113,7 @@ const boardRoles: BoardRole[] = [
     title: "Fundraising Chair", 
     assignee: null,
     interested: [
-      { name: "Maria Santos", interest: "lead" }
+      { name: "Maria Santos", interest: "lead", tags: ["frequent"] }
     ]
   },
 ]
@@ -117,6 +123,9 @@ const parentInvolvement: Record<string, {
   committees: { name: string; role: string; item: string }[]
   events: { name: string; role: string }[]
   interests: { committee: string; item: string; type: string }[]
+  isFrequentVolunteer?: boolean
+  isNewParent?: boolean
+  wasPreviouslyAssigned?: boolean
 }> = {
   "Leia Wien": {
     committees: [
@@ -125,7 +134,8 @@ const parentInvolvement: Record<string, {
     events: [
       { name: "Fall Book Fair", role: "Volunteer" }
     ],
-    interests: []
+    interests: [],
+    isFrequentVolunteer: true
   },
   "Erin Kirkpatrick": {
     committees: [
@@ -133,14 +143,16 @@ const parentInvolvement: Record<string, {
       { name: "Classroom Parent Leader", role: "Support", item: "Room Parent - 3rd Grade Miller" }
     ],
     events: [],
-    interests: []
+    interests: [],
+    isFrequentVolunteer: true
   },
   "Jessica Lee": {
     committees: [],
     events: [],
     interests: [
       { committee: "Classroom Parent Leader", item: "Room Parent - 1st Grade Hertert", type: "support" }
-    ]
+    ],
+    isNewParent: true
   },
   "Amanda Foster": {
     committees: [],
@@ -149,35 +161,70 @@ const parentInvolvement: Record<string, {
     ],
     interests: [
       { committee: "Classroom Parent Leader", item: "Room Parent - 5th Grade Vaughan", type: "lead" }
-    ]
+    ],
+    isFrequentVolunteer: true
   },
   "Maria Santos": {
     committees: [],
     events: [],
     interests: [
       { committee: "Classroom Parent Leader", item: "Room Parent - 4th Grade Wright", type: "support" }
-    ]
+    ],
+    isFrequentVolunteer: true
   },
   "Sarah Mitchell": {
     committees: [
       { name: "Board", role: "President", item: "PTO Board" }
     ],
     events: [],
-    interests: []
+    interests: [],
+    isFrequentVolunteer: true
   },
   "David Chen": {
     committees: [
       { name: "Board", role: "Vice President", item: "PTO Board" }
     ],
     events: [],
-    interests: []
+    interests: [],
+    isFrequentVolunteer: true
   },
   "Priya Raman": {
     committees: [],
     events: [],
     interests: [
       { committee: "Board", item: "Secretary", type: "lead" }
-    ]
+    ],
+    isNewParent: true
+  },
+  "Kate Vance": {
+    committees: [
+      { name: "Classroom Parent Leader", role: "Lead", item: "Room Parent - 5th Grade Young" }
+    ],
+    events: [],
+    interests: [],
+    isFrequentVolunteer: true,
+    wasPreviouslyAssigned: true
+  },
+  "Tom Nguyen": {
+    committees: [],
+    events: [],
+    interests: [
+      { committee: "Classroom Parent Leader", item: "Room Parent - 4th Grade Wright", type: "support" }
+    ],
+    isNewParent: true
+  },
+  "Rachel Kim": {
+    committees: [],
+    events: [],
+    interests: [],
+    isNewParent: true
+  },
+  "Chris Park": {
+    committees: [],
+    events: [
+      { name: "Spring Book Fair", role: "Volunteer" }
+    ],
+    interests: []
   }
 }
 
@@ -218,8 +265,8 @@ const committees: Committee[] = [
             ],
             needsMore: true,
             interested: [
-              { name: "Jessica Lee", interest: "support" },
-              { name: "Priya Raman", interest: "support" }
+              { name: "Jessica Lee", interest: "support", tags: ["new-parent"] },
+              { name: "Priya Raman", interest: "support", tags: ["new-parent"] }
             ]
           },
           { 
@@ -247,7 +294,7 @@ const committees: Committee[] = [
               { name: "Erin Kirkpatrick", role: "support" }
             ],
             interested: [
-              { name: "David Chen", interest: "general" }
+              { name: "David Chen", interest: "general", tags: ["frequent"] }
             ]
           },
           { 
@@ -258,9 +305,9 @@ const committees: Committee[] = [
             ],
             needsMore: true,
             interested: [
-              { name: "Maria Santos", interest: "support" },
-              { name: "Tom Nguyen", interest: "support" },
-              { name: "Rachel Kim", interest: "general" }
+              { name: "Maria Santos", interest: "support", tags: ["frequent"] },
+              { name: "Tom Nguyen", interest: "support", tags: ["new-parent"] },
+              { name: "Rachel Kim", interest: "general", tags: ["new-parent"] }
             ]
           },
           { 
@@ -278,7 +325,7 @@ const committees: Committee[] = [
             ],
             needsMore: true,
             interested: [
-              { name: "Amanda Foster", interest: "lead" },
+              { name: "Amanda Foster", interest: "lead", tags: ["frequent"] },
               { name: "Chris Park", interest: "support" }
             ]
           }
@@ -310,7 +357,7 @@ const committees: Committee[] = [
               { name: "Bridget Thompson" }
             ],
             interested: [
-              { name: "Sarah Mitchell", interest: "general" }
+              { name: "Sarah Mitchell", interest: "general", tags: ["frequent"] }
             ]
           },
           { 
@@ -412,13 +459,14 @@ const categoryConfig: Record<string, { label: string; icon: typeof Users; descri
 
 // Calculate gap stats for an item - ONLY based on assignments, not interested
 function getItemGapStats(item: CommitteeItem) {
-  if (!item.slots) return { total: 0, open: 0, needsSupport: 0 }
+  if (!item.slots) return { total: 0, open: 0, needsSupport: 0, totalInterested: 0 }
   
   const total = item.slots.length
   const open = item.slots.filter(s => s.volunteers.length === 0).length
   const needsSupport = item.slots.filter(s => s.needsMore && s.volunteers.length > 0).length
+  const totalInterested = item.slots.reduce((acc, s) => acc + (s.interested?.length || 0), 0)
   
-  return { total, open, needsSupport }
+  return { total, open, needsSupport, totalInterested }
 }
 
 // Calculate gap stats for an entire committee
@@ -435,15 +483,44 @@ function getCommitteeGapStats(committee: Committee) {
     totalSlots += stats.total
     open += stats.open
     needsSupport += stats.needsSupport
-    
-    if (item.slots) {
-      for (const slot of item.slots) {
-        totalInterested += slot.interested?.length || 0
-      }
-    }
+    totalInterested += stats.totalInterested
   }
   
   return { totalSlots, open, needsSupport, totalInterested }
+}
+
+// Calculate global stats for dashboard
+function getGlobalStats() {
+  let rolesNeedingSupport = 0
+  let totalInterested = 0
+  let boardNeedingSuccessors = boardRoles.filter(r => r.needsSuccessor).length
+  let unassignedBoardRoles = boardRoles.filter(r => !r.assignee).length
+  let upcomingEventsNeedingVolunteers = 0 // Placeholder for actual event data
+
+  for (const committee of committees) {
+    const stats = getCommitteeGapStats(committee)
+    rolesNeedingSupport += stats.open + stats.needsSupport
+    totalInterested += stats.totalInterested
+  }
+
+  // Add board interested
+  for (const role of boardRoles) {
+    totalInterested += role.interested?.length || 0
+  }
+
+  return {
+    rolesNeedingSupport,
+    totalInterested,
+    boardNeedingSuccessors,
+    unassignedBoardRoles,
+    upcomingEventsNeedingVolunteers: 3 // Mock data
+  }
+}
+
+// Check if a committee needs attention
+function committeeNeedsAttention(committee: Committee): boolean {
+  const stats = getCommitteeGapStats(committee)
+  return stats.open > 0 || stats.needsSupport > 0
 }
 
 // Sort items by urgency: open first, then needs support, then covered
@@ -467,6 +544,8 @@ function sortItemsByNeed(items: CommitteeItem[]): CommitteeItem[] {
     return 0
   })
 }
+
+type FilterType = "all" | "needs-support" | "interested" | "board-successors" | "events"
 
 function ItemTypeIcon({ type }: { type: "event" | "role" | "program" }) {
   switch (type) {
@@ -497,6 +576,136 @@ function GapSummary({ item }: { item: CommitteeItem }) {
       {open > 0 && (
         <span className="text-red-600 font-medium">
           {open} open
+        </span>
+      )}
+    </div>
+  )
+}
+
+// At a Glance Summary Bar
+function AtAGlanceSummary({ 
+  stats, 
+  activeFilter,
+  onFilterChange 
+}: { 
+  stats: ReturnType<typeof getGlobalStats>
+  activeFilter: FilterType
+  onFilterChange: (filter: FilterType) => void
+}) {
+  const metrics = [
+    {
+      id: "needs-support" as FilterType,
+      label: "Roles needing help",
+      value: stats.rolesNeedingSupport,
+      icon: AlertTriangle,
+      color: "text-red-600",
+      bgColor: "bg-red-50 hover:bg-red-100 border-red-200",
+      activeBg: "bg-red-100 border-red-400"
+    },
+    {
+      id: "interested" as FilterType,
+      label: "Interested parents",
+      value: stats.totalInterested,
+      icon: Users,
+      color: "text-blue-600",
+      bgColor: "bg-blue-50 hover:bg-blue-100 border-blue-200",
+      activeBg: "bg-blue-100 border-blue-400"
+    },
+    {
+      id: "board-successors" as FilterType,
+      label: "Board needs successors",
+      value: stats.boardNeedingSuccessors,
+      icon: Crown,
+      color: "text-amber-600",
+      bgColor: "bg-amber-50 hover:bg-amber-100 border-amber-200",
+      activeBg: "bg-amber-100 border-amber-400"
+    },
+    {
+      id: "events" as FilterType,
+      label: "Events need volunteers",
+      value: stats.upcomingEventsNeedingVolunteers,
+      icon: Calendar,
+      color: "text-purple-600",
+      bgColor: "bg-purple-50 hover:bg-purple-100 border-purple-200",
+      activeBg: "bg-purple-100 border-purple-400"
+    },
+  ]
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-medium text-muted-foreground">At a glance</h3>
+        {activeFilter !== "all" && (
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 text-xs gap-1"
+            onClick={() => onFilterChange("all")}
+          >
+            <X className="h-3 w-3" />
+            Clear filter
+          </Button>
+        )}
+      </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {metrics.map((metric) => {
+          const Icon = metric.icon
+          const isActive = activeFilter === metric.id
+          return (
+            <button
+              key={metric.id}
+              onClick={() => onFilterChange(isActive ? "all" : metric.id)}
+              className={`p-4 rounded-lg border text-left transition-all ${
+                isActive ? metric.activeBg : metric.bgColor
+              } ${isActive ? 'ring-2 ring-offset-1' : ''}`}
+              style={{ 
+                ringColor: isActive ? metric.color.replace('text-', '') : undefined 
+              }}
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Icon className={`h-4 w-4 ${metric.color}`} />
+                <span className={`text-2xl font-bold ${metric.color}`}>{metric.value}</span>
+              </div>
+              <span className="text-xs text-muted-foreground">{metric.label}</span>
+            </button>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+// Focus Mode Toggle
+function FocusModeToggle({ 
+  focusMode, 
+  onToggle 
+}: { 
+  focusMode: boolean
+  onToggle: () => void 
+}) {
+  return (
+    <div className="flex items-center gap-2 mb-6">
+      <Button
+        variant={focusMode ? "default" : "outline"}
+        size="sm"
+        className="gap-2"
+        onClick={onToggle}
+      >
+        {focusMode ? (
+          <>
+            <Eye className="h-4 w-4" />
+            Needs Attention
+          </>
+        ) : (
+          <>
+            <EyeOff className="h-4 w-4" />
+            All Committees
+          </>
+        )}
+      </Button>
+      {focusMode && (
+        <span className="text-xs text-muted-foreground">
+          Showing only items that need action
         </span>
       )}
     </div>
@@ -536,9 +745,32 @@ function ParentProfileSheet({
               </SheetDescription>
             </div>
           </div>
+          {/* Parent tags */}
+          {involvement && (
+            <div className="flex flex-wrap gap-1.5 mt-3">
+              {involvement.isFrequentVolunteer && (
+                <Badge variant="secondary" className="text-xs gap-1 bg-emerald-50 text-emerald-700 border-emerald-200">
+                  <Star className="h-3 w-3" />
+                  Frequent volunteer
+                </Badge>
+              )}
+              {involvement.isNewParent && (
+                <Badge variant="secondary" className="text-xs gap-1 bg-blue-50 text-blue-700 border-blue-200">
+                  <Sparkles className="h-3 w-3" />
+                  New parent
+                </Badge>
+              )}
+              {involvement.wasPreviouslyAssigned && (
+                <Badge variant="secondary" className="text-xs gap-1 bg-purple-50 text-purple-700 border-purple-200">
+                  <Clock className="h-3 w-3" />
+                  Previously assigned
+                </Badge>
+              )}
+            </div>
+          )}
         </SheetHeader>
 
-        <ScrollArea className="h-[calc(100vh-140px)] pr-4">
+        <ScrollArea className="h-[calc(100vh-180px)] pr-4">
           <div className="space-y-6">
             {/* Current Assignments */}
             {involvement && involvement.committees.length > 0 && (
@@ -659,6 +891,37 @@ function ParentName({
   )
 }
 
+// Candidate tag badge component
+function CandidateTagBadge({ tag }: { tag: "frequent" | "new-parent" | "previously-assigned" }) {
+  const configs = {
+    "frequent": {
+      label: "Frequent",
+      icon: Star,
+      className: "bg-emerald-50 text-emerald-700 border-emerald-200"
+    },
+    "new-parent": {
+      label: "New",
+      icon: Sparkles,
+      className: "bg-blue-50 text-blue-700 border-blue-200"
+    },
+    "previously-assigned": {
+      label: "Prev.",
+      icon: Clock,
+      className: "bg-purple-50 text-purple-700 border-purple-200"
+    }
+  }
+  
+  const config = configs[tag]
+  const Icon = config.icon
+  
+  return (
+    <Badge variant="outline" className={`text-[9px] px-1 py-0 gap-0.5 ${config.className}`}>
+      <Icon className="h-2.5 w-2.5" />
+      {config.label}
+    </Badge>
+  )
+}
+
 // Actionable Interested Section
 function InterestedSection({ 
   interested, 
@@ -728,50 +991,40 @@ function InterestedPersonRow({
 
   return (
     <div className="flex items-center justify-between gap-2 p-2 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors group/interested">
-      <div className="flex items-center gap-2 min-w-0">
+      <div className="flex items-center gap-2 min-w-0 flex-wrap">
         <ParentName 
           name={person.name} 
-          className="text-sm font-medium truncate"
+          className="text-sm font-medium"
           onParentClick={onParentClick}
         />
         <Badge variant="outline" className={`text-[10px] px-1.5 py-0 ${interestColor}`}>
           {interestLabel}
         </Badge>
+        {/* Candidate metadata tags */}
+        {person.tags && person.tags.map((tag) => (
+          <CandidateTagBadge key={tag} tag={tag} />
+        ))}
       </div>
       
-      {/* Quick actions - visible on hover */}
-      <div className="flex items-center gap-1 opacity-0 group-hover/interested:opacity-100 transition-opacity">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
-              <UserPlus className="h-3 w-3" />
-              <span className="hidden sm:inline">Assign</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
-              Assign {person.name} to {slotName}
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Users className="mr-2 h-4 w-4" />
-              Assign as Lead
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Users className="mr-2 h-4 w-4" />
-              Assign as Support
-            </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Calendar className="mr-2 h-4 w-4" />
-              Assign to different slot
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-        
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs gap-1">
+      {/* Quick inline actions - always visible on desktop, hover on mobile */}
+      <div className="flex items-center gap-1 shrink-0 sm:opacity-100 opacity-0 group-hover/interested:opacity-100 transition-opacity">
+        <Button 
+          variant="default" 
+          size="sm" 
+          className="h-7 px-2 text-xs gap-1"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <UserPlus className="h-3 w-3" />
+          <span className="hidden sm:inline">Assign as {person.interest === "lead" ? "Lead" : "Support"}</span>
+          <span className="sm:hidden">Assign</span>
+        </Button>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-7 px-2 text-xs gap-1"
+          onClick={(e) => e.stopPropagation()}
+        >
           <Mail className="h-3 w-3" />
-          <span className="hidden sm:inline">Reach out</span>
         </Button>
       </div>
     </div>
@@ -1062,8 +1315,9 @@ function CommitteeGapSummary({ committee }: { committee: Committee }) {
   // Fully covered
   if (open === 0 && needsSupport === 0) {
     return (
-      <span className="text-xs text-muted-foreground/60">
-        Fully covered
+      <span className="text-xs text-muted-foreground/60 flex items-center gap-1">
+        <CheckCircle2 className="h-3 w-3" />
+        Covered
       </span>
     )
   }
@@ -1375,14 +1629,24 @@ function CommitteeRow({
   )
 }
 
-// Board Leadership Section
+// Board Leadership Section - Enhanced with priority badges
 function BoardLeadershipSection({ 
-  onParentClick 
+  onParentClick,
+  focusMode 
 }: { 
-  onParentClick: (name: string) => void 
+  onParentClick: (name: string) => void
+  focusMode: boolean 
 }) {
   const openRoles = boardRoles.filter(r => !r.assignee).length
+  const needsSuccessorCount = boardRoles.filter(r => r.needsSuccessor).length
   const totalInterested = boardRoles.reduce((acc, r) => acc + (r.interested?.length || 0), 0)
+
+  // In focus mode, only show roles that need attention
+  const visibleRoles = focusMode 
+    ? boardRoles.filter(r => !r.assignee || r.needsSuccessor || (r.interested && r.interested.length > 0))
+    : boardRoles
+
+  if (focusMode && visibleRoles.length === 0) return null
 
   return (
     <Card className="mb-8 border-2 border-primary/10 bg-gradient-to-br from-background to-primary/5">
@@ -1391,29 +1655,35 @@ function BoardLeadershipSection({
           <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
             <Crown className="h-5 w-5 text-primary" />
           </div>
-          <div>
+          <div className="flex-1">
             <CardTitle className="text-lg">Board Leadership</CardTitle>
             <CardDescription>
-              {openRoles > 0 ? (
-                <span className="flex items-center gap-2">
-                  <span className="text-red-600 font-medium">{openRoles} open position{openRoles !== 1 ? 's' : ''}</span>
-                  {totalInterested > 0 && (
-                    <>
-                      <span>•</span>
-                      <span>{totalInterested} interested</span>
-                    </>
-                  )}
-                </span>
-              ) : (
-                "All positions filled"
-              )}
+              <span className="flex items-center gap-2 flex-wrap">
+                {openRoles > 0 && (
+                  <span className="text-red-600 font-medium">{openRoles} unassigned</span>
+                )}
+                {openRoles > 0 && needsSuccessorCount > 0 && <span>•</span>}
+                {needsSuccessorCount > 0 && (
+                  <span className="text-amber-600 font-medium">{needsSuccessorCount} need{needsSuccessorCount === 1 ? 's' : ''} successor</span>
+                )}
+                {(openRoles > 0 || needsSuccessorCount > 0) && totalInterested > 0 && <span>•</span>}
+                {totalInterested > 0 && (
+                  <span>{totalInterested} interested</span>
+                )}
+                {openRoles === 0 && needsSuccessorCount === 0 && (
+                  <span className="flex items-center gap-1 text-emerald-600">
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    All positions filled
+                  </span>
+                )}
+              </span>
             </CardDescription>
           </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {boardRoles.map((role) => {
+          {visibleRoles.map((role) => {
             const isOpen = !role.assignee
             const hasInterested = role.interested && role.interested.length > 0
             
@@ -1423,19 +1693,31 @@ function BoardLeadershipSection({
                 className={`rounded-lg border p-4 transition-colors ${
                   isOpen 
                     ? "bg-red-50/60 border-red-200" 
-                    : "bg-background border-border/60"
+                    : role.needsSuccessor
+                      ? "bg-amber-50/50 border-amber-200"
+                      : "bg-background border-border/60"
                 }`}
               >
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <h4 className="font-semibold text-sm">{role.title}</h4>
-                  {isOpen && (
-                    <Badge 
-                      variant="outline"
-                      className="text-xs border-red-300 text-red-700 bg-red-100 font-semibold shrink-0"
-                    >
-                      Open
-                    </Badge>
-                  )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    {isOpen && (
+                      <Badge 
+                        variant="outline"
+                        className="text-xs border-red-300 text-red-700 bg-red-100 font-semibold"
+                      >
+                        Unassigned
+                      </Badge>
+                    )}
+                    {role.needsSuccessor && !isOpen && (
+                      <Badge 
+                        variant="outline"
+                        className="text-xs border-amber-300 text-amber-700 bg-amber-100 font-semibold"
+                      >
+                        Needs successor
+                      </Badge>
+                    )}
+                  </div>
                 </div>
                 
                 {role.assignee ? (
@@ -1451,7 +1733,7 @@ function BoardLeadershipSection({
                   </div>
                 )}
 
-                {/* Interested candidates */}
+                {/* Interested candidates with metadata badges */}
                 {hasInterested && (
                   <div className="mt-3 pt-3 border-t border-dashed border-muted-foreground/20">
                     <div className="text-[11px] uppercase tracking-wide text-muted-foreground/70 font-medium mb-2">
@@ -1463,10 +1745,10 @@ function BoardLeadershipSection({
                           key={i}
                           className="flex items-center justify-between gap-2 p-2 rounded-md bg-muted/30 hover:bg-muted/50 transition-colors group/interested"
                         >
-                          <div className="flex items-center gap-2 min-w-0">
+                          <div className="flex items-center gap-2 min-w-0 flex-wrap">
                             <ParentName 
                               name={person.name} 
-                              className="text-sm truncate"
+                              className="text-sm"
                               onParentClick={onParentClick}
                             />
                             {person.interest === "lead" && (
@@ -1474,10 +1756,19 @@ function BoardLeadershipSection({
                                 Lead
                               </Badge>
                             )}
+                            {/* Candidate metadata tags */}
+                            {person.tags && person.tags.map((tag) => (
+                              <CandidateTagBadge key={tag} tag={tag} />
+                            ))}
                           </div>
                           
-                          <div className="flex items-center gap-1 opacity-0 group-hover/interested:opacity-100 transition-opacity">
-                            <Button variant="ghost" size="sm" className="h-6 px-2 text-xs gap-1">
+                          <div className="flex items-center gap-1 shrink-0 sm:opacity-100 opacity-0 group-hover/interested:opacity-100 transition-opacity">
+                            <Button 
+                              variant="default" 
+                              size="sm" 
+                              className="h-6 px-2 text-xs gap-1"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <UserPlus className="h-3 w-3" />
                               <span className="hidden sm:inline">Assign</span>
                             </Button>
@@ -1504,22 +1795,31 @@ function CommitteeCategorySection({
   category,
   committees,
   onOpenDetail,
-  onParentClick 
+  onParentClick,
+  focusMode 
 }: { 
   category: string
   committees: Committee[]
   onOpenDetail: (committee: Committee) => void
-  onParentClick: (name: string) => void 
+  onParentClick: (name: string) => void
+  focusMode: boolean 
 }) {
   const config = categoryConfig[category]
   if (!config || committees.length === 0) return null
+
+  // Filter committees based on focus mode
+  const visibleCommittees = focusMode 
+    ? committees.filter(c => committeeNeedsAttention(c))
+    : committees
+
+  if (focusMode && visibleCommittees.length === 0) return null
 
   const Icon = config.icon
 
   // Calculate category-level stats
   let totalOpen = 0
   let totalNeedsSupport = 0
-  for (const committee of committees) {
+  for (const committee of visibleCommittees) {
     const stats = getCommitteeGapStats(committee)
     totalOpen += stats.open
     totalNeedsSupport += stats.needsSupport
@@ -1554,7 +1854,7 @@ function CommitteeCategorySection({
       <Card>
         <CardContent className="p-0">
           <ul className="divide-y divide-border">
-            {committees.map((committee) => (
+            {visibleCommittees.map((committee) => (
               <CommitteeRow 
                 key={committee.name} 
                 committee={committee}
@@ -1574,6 +1874,10 @@ export default function CommitteesPage() {
   const [committeeDetailOpen, setCommitteeDetailOpen] = useState(false)
   const [selectedParent, setSelectedParent] = useState<string | null>(null)
   const [parentProfileOpen, setParentProfileOpen] = useState(false)
+  const [focusMode, setFocusMode] = useState(false)
+  const [activeFilter, setActiveFilter] = useState<FilterType>("all")
+
+  const stats = useMemo(() => getGlobalStats(), [])
 
   const handleOpenDetail = (committee: Committee) => {
     setSelectedCommittee(committee)
@@ -1583,6 +1887,14 @@ export default function CommitteesPage() {
   const handleParentClick = (name: string) => {
     setSelectedParent(name)
     setParentProfileOpen(true)
+  }
+
+  const handleFilterChange = (filter: FilterType) => {
+    setActiveFilter(filter)
+    // Auto-enable focus mode when filtering to needs-support
+    if (filter === "needs-support") {
+      setFocusMode(true)
+    }
   }
 
   // Group committees by category
@@ -1599,8 +1911,24 @@ export default function CommitteesPage() {
       title="Committees" 
       description="Manage PTO leadership, committees, and volunteer roles."
     >
+      {/* At a Glance Summary */}
+      <AtAGlanceSummary 
+        stats={stats}
+        activeFilter={activeFilter}
+        onFilterChange={handleFilterChange}
+      />
+
+      {/* Focus Mode Toggle */}
+      <FocusModeToggle 
+        focusMode={focusMode}
+        onToggle={() => setFocusMode(!focusMode)}
+      />
+
       {/* Board Leadership Section */}
-      <BoardLeadershipSection onParentClick={handleParentClick} />
+      <BoardLeadershipSection 
+        onParentClick={handleParentClick}
+        focusMode={focusMode}
+      />
 
       {/* Categorized Committees */}
       <CommitteeCategorySection 
@@ -1608,6 +1936,7 @@ export default function CommitteesPage() {
         committees={committeesByCategory.classroom}
         onOpenDetail={handleOpenDetail}
         onParentClick={handleParentClick}
+        focusMode={focusMode}
       />
       
       <CommitteeCategorySection 
@@ -1615,6 +1944,7 @@ export default function CommitteesPage() {
         committees={committeesByCategory.events}
         onOpenDetail={handleOpenDetail}
         onParentClick={handleParentClick}
+        focusMode={focusMode}
       />
       
       <CommitteeCategorySection 
@@ -1622,6 +1952,7 @@ export default function CommitteesPage() {
         committees={committeesByCategory.programs}
         onOpenDetail={handleOpenDetail}
         onParentClick={handleParentClick}
+        focusMode={focusMode}
       />
       
       <CommitteeCategorySection 
@@ -1629,6 +1960,7 @@ export default function CommitteesPage() {
         committees={committeesByCategory.fundraising}
         onOpenDetail={handleOpenDetail}
         onParentClick={handleParentClick}
+        focusMode={focusMode}
       />
       
       <CommitteeCategorySection 
@@ -1636,7 +1968,24 @@ export default function CommitteesPage() {
         committees={committeesByCategory.operations}
         onOpenDetail={handleOpenDetail}
         onParentClick={handleParentClick}
+        focusMode={focusMode}
       />
+
+      {/* Empty state when focus mode has no results */}
+      {focusMode && (
+        <div className="text-center py-12 text-muted-foreground">
+          <CheckCircle2 className="h-12 w-12 mx-auto mb-4 text-emerald-500" />
+          <p className="text-lg font-medium text-foreground">All caught up!</p>
+          <p className="text-sm mt-1">No committees or roles need attention right now.</p>
+          <Button 
+            variant="outline" 
+            className="mt-4"
+            onClick={() => setFocusMode(false)}
+          >
+            View all committees
+          </Button>
+        </div>
+      )}
 
       {/* Committee Detail Sheet */}
       <CommitteeDetailSheet 
