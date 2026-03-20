@@ -6,11 +6,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge"
 import { ChevronRight, ChevronDown, Calendar, Users, BookOpen } from "lucide-react"
 
-type SlotStatus = "filled" | "open"
+interface Volunteer {
+  name: string
+  role?: "lead" | "support"
+}
 
 interface Slot {
   name: string
-  status: SlotStatus
+  volunteers: Volunteer[]
+  needsMore?: boolean
 }
 
 interface CommitteeItem {
@@ -46,9 +50,23 @@ const committees: Committee[] = [
         type: "role", 
         name: "Room Parent",
         slots: [
-          { name: "Kindergarten - Anderson", status: "filled" },
-          { name: "1st Grade - Hertert", status: "open" },
-          { name: "2nd Grade - Peterson", status: "open" }
+          { 
+            name: "Kindergarten - Anderson", 
+            volunteers: [
+              { name: "Leia Wien", role: "lead" },
+              { name: "Taryn Hatchel", role: "support" },
+              { name: "Brynee Fletcher", role: "support" },
+              { name: "Joe Dobbyn", role: "support" }
+            ]
+          },
+          { 
+            name: "1st Grade - Hertert", 
+            volunteers: []
+          },
+          { 
+            name: "2nd Grade - Peterson", 
+            volunteers: []
+          }
         ]
       }
     ]
@@ -60,8 +78,17 @@ const committees: Committee[] = [
         type: "role",
         name: "Photographer",
         slots: [
-          { name: "Kindergarten - Leach", status: "filled" },
-          { name: "3rd Grade - Miller", status: "open" }
+          { 
+            name: "Kindergarten - Leach", 
+            volunteers: [
+              { name: "Lisa Boomer" },
+              { name: "Julia Daigneault" }
+            ]
+          },
+          { 
+            name: "3rd Grade - Miller", 
+            volunteers: []
+          }
         ]
       }
     ]
@@ -124,6 +151,61 @@ function ItemTypeBadge({ type }: { type: "event" | "role" | "program" }) {
   )
 }
 
+function SlotDisplay({ slot }: { slot: Slot }) {
+  const hasVolunteers = slot.volunteers.length > 0
+  const lead = slot.volunteers.find(v => v.role === "lead")
+  const supporters = slot.volunteers.filter(v => v.role === "support")
+  const unroledVolunteers = slot.volunteers.filter(v => !v.role)
+
+  return (
+    <li className="text-sm">
+      <div className="flex items-start gap-2">
+        <span className="text-muted-foreground font-medium">{slot.name}</span>
+        {!hasVolunteers && (
+          <Badge 
+            variant="outline"
+            className="text-xs border-orange-300 text-orange-600 bg-orange-50"
+          >
+            Open
+          </Badge>
+        )}
+        {slot.needsMore && hasVolunteers && (
+          <Badge 
+            variant="outline"
+            className="text-xs border-amber-300 text-amber-600 bg-amber-50"
+          >
+            Needs more volunteers
+          </Badge>
+        )}
+      </div>
+      
+      {hasVolunteers && (
+        <div className="mt-1 ml-4 space-y-0.5">
+          {lead && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Lead:</span>
+              <span className="text-sm">{lead.name}</span>
+            </div>
+          )}
+          {supporters.length > 0 && (
+            <div className="flex items-start gap-2">
+              <span className="text-xs text-muted-foreground">Support:</span>
+              <span className="text-sm text-muted-foreground">
+                {supporters.map(v => v.name).join(", ")}
+              </span>
+            </div>
+          )}
+          {unroledVolunteers.length > 0 && (
+            <div className="text-sm">
+              {unroledVolunteers.map(v => v.name).join(", ")}
+            </div>
+          )}
+        </div>
+      )}
+    </li>
+  )
+}
+
 function CommitteeRow({ committee }: { committee: Committee }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const hasItems = committee.items && committee.items.length > 0
@@ -159,21 +241,9 @@ function CommitteeRow({ committee }: { committee: Committee }) {
                 </div>
                 
                 {item.slots && (
-                  <ul className="ml-6 space-y-1">
+                  <ul className="ml-6 space-y-3">
                     {item.slots.map((slot, slotIdx) => (
-                      <li key={slotIdx} className="flex items-center gap-2 text-sm">
-                        <span className="text-muted-foreground">{slot.name}</span>
-                        <Badge 
-                          variant={slot.status === "filled" ? "secondary" : "outline"}
-                          className={`text-xs ${
-                            slot.status === "open" 
-                              ? "border-orange-300 text-orange-600 bg-orange-50" 
-                              : ""
-                          }`}
-                        >
-                          {slot.status === "filled" ? "Filled" : "Open"}
-                        </Badge>
-                      </li>
+                      <SlotDisplay key={slotIdx} slot={slot} />
                     ))}
                   </ul>
                 )}
