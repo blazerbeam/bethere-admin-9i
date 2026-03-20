@@ -216,15 +216,22 @@ function SlotDisplay({ slot }: { slot: Slot }) {
   const isOpen = !hasVolunteers
   const needsSupport = slot.needsMore && hasVolunteers
 
+  // Background colors based on status - gaps dominate visual attention
+  const bgClass = isOpen 
+    ? "bg-red-50/60 border-red-200" 
+    : needsSupport 
+      ? "bg-amber-50/50 border-amber-200" 
+      : "bg-background border-border/60"
+
   return (
-    <div className="rounded-md border border-border/60 bg-background p-3">
-      <div className="flex items-center justify-between gap-3">
+    <div className={`rounded-lg border p-4 ${bgClass}`}>
+      <div className="flex items-start justify-between gap-4">
         <span className="font-semibold text-sm">{slot.name}</span>
         <div className="flex items-center gap-2 shrink-0">
           {isOpen && (
             <Badge 
               variant="outline"
-              className="text-xs border-red-200 text-red-600 bg-red-50 font-medium"
+              className="text-xs border-red-300 text-red-700 bg-red-100 font-semibold"
             >
               Open
             </Badge>
@@ -232,7 +239,7 @@ function SlotDisplay({ slot }: { slot: Slot }) {
           {needsSupport && (
             <Badge 
               variant="outline"
-              className="text-xs border-amber-300 text-amber-700 bg-amber-50 font-medium"
+              className="text-xs border-amber-300 text-amber-700 bg-amber-100 font-semibold"
             >
               Needs support
             </Badge>
@@ -241,27 +248,27 @@ function SlotDisplay({ slot }: { slot: Slot }) {
       </div>
       
       {hasVolunteers && (
-        <div className="mt-2 space-y-1 text-sm">
+        <div className="mt-2 space-y-1">
           {coLeads.length > 0 && (
-            <div className="flex items-baseline gap-1.5">
+            <div className="flex items-baseline gap-2 text-sm">
               <span className="text-xs text-muted-foreground uppercase tracking-wide w-16 shrink-0">Co-leads</span>
               <span>{coLeads.map(v => v.name).join(", ")}</span>
             </div>
           )}
           {leads.length > 0 && (
-            <div className="flex items-baseline gap-1.5">
+            <div className="flex items-baseline gap-2 text-sm">
               <span className="text-xs text-muted-foreground uppercase tracking-wide w-16 shrink-0">Lead</span>
               <span>{leads.map(v => v.name).join(", ")}</span>
             </div>
           )}
           {supporters.length > 0 && (
-            <div className="flex items-baseline gap-1.5">
+            <div className="flex items-baseline gap-2 text-sm">
               <span className="text-xs text-muted-foreground uppercase tracking-wide w-16 shrink-0">Support</span>
               <span className="text-muted-foreground">{supporters.map(v => v.name).join(", ")}</span>
             </div>
           )}
           {unroledVolunteers.length > 0 && (
-            <div className="text-muted-foreground">
+            <div className="text-sm text-muted-foreground">
               {unroledVolunteers.map(v => v.name).join(", ")}
             </div>
           )}
@@ -280,12 +287,6 @@ function ItemSection({ type, items }: { type: "event" | "role" | "program", item
     program: "Programs"
   }
 
-  const bgColors: Record<string, string> = {
-    event: "bg-blue-50/50 border-blue-100",
-    role: "bg-amber-50/50 border-amber-100",
-    program: "bg-emerald-50/50 border-emerald-100"
-  }
-
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
@@ -297,11 +298,11 @@ function ItemSection({ type, items }: { type: "event" | "role" | "program", item
       
       <div className="space-y-4">
         {items.map((item, idx) => (
-          <div key={idx} className={`rounded-lg border p-4 ${bgColors[type]}`}>
-            <h4 className="font-medium text-sm mb-3">{item.name}</h4>
+          <div key={idx}>
+            <h4 className="font-medium text-sm mb-3 text-foreground">{item.name}</h4>
             
             {item.slots && item.slots.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {item.slots.map((slot, slotIdx) => (
                   <SlotDisplay key={slotIdx} slot={slot} />
                 ))}
@@ -346,8 +347,8 @@ function CommitteeRow({ committee }: { committee: Committee }) {
       </button>
       
       {isExpanded && committee.items && (
-        <div className="border-t bg-muted/20 px-6 py-5">
-          <div className="space-y-6">
+        <div className="border-t bg-muted/20 px-6 py-6">
+          <div className="space-y-8">
             <ItemSection type="role" items={roles} />
             <ItemSection type="event" items={events} />
             <ItemSection type="program" items={programs} />
