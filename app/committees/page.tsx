@@ -4,7 +4,16 @@ import { useState } from "react"
 import { AdminLayout } from "@/components/admin-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { ChevronRight, ChevronDown, Calendar, Users, BookOpen } from "lucide-react"
+import { ChevronRight, ChevronDown, Calendar, Users, BookOpen, MoreHorizontal, Copy, Sparkles, Tags, ListTodo, UserPlus } from "lucide-react"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu"
+import { Button } from "@/components/ui/button"
 
 interface Volunteer {
   name: string
@@ -422,10 +431,13 @@ function ItemSection({ type, items }: { type: "event" | "role" | "program", item
       
       <div className="space-y-4">
         {sortedItems.map((item, idx) => (
-          <div key={idx}>
+          <div key={idx} className="group/item">
             <div className="flex items-center justify-between mb-3">
               <h4 className="font-medium text-sm text-foreground">{item.name}</h4>
-              <GapSummary item={item} />
+              <div className="flex items-center gap-2">
+                <GapSummary item={item} />
+                <ItemActions item={item} />
+              </div>
             </div>
             
             {item.slots && item.slots.length > 0 && (
@@ -446,6 +458,108 @@ function ItemSection({ type, items }: { type: "event" | "role" | "program", item
   )
 }
 
+function CommitteeActions({ committee }: { committee: Committee }) {
+  const hasItems = committee.items && committee.items.length > 0
+  
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MoreHorizontal className="h-4 w-4" />
+          <span className="sr-only">Committee actions</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+          Actions
+        </DropdownMenuLabel>
+        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+          <Copy className="mr-2 h-4 w-4" />
+          Duplicate committee
+        </DropdownMenuItem>
+        {hasItems && (
+          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+            <Copy className="mr-2 h-4 w-4" />
+            Duplicate structure only
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal flex items-center gap-1">
+          <Sparkles className="h-3 w-3" />
+          Generate suggestions
+        </DropdownMenuLabel>
+        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+          <Tags className="mr-2 h-4 w-4" />
+          Suggest tags
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Suggest volunteer roles
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+          <ListTodo className="mr-2 h-4 w-4" />
+          Suggest tasks
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+          <Calendar className="mr-2 h-4 w-4" />
+          Suggest related events
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+function ItemActions({ item }: { item: CommitteeItem }) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          className="h-6 w-6 p-0 opacity-0 group-hover/item:opacity-100 transition-opacity"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MoreHorizontal className="h-3.5 w-3.5" />
+          <span className="sr-only">Item actions</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-52">
+        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
+          Actions
+        </DropdownMenuLabel>
+        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+          <Copy className="mr-2 h-4 w-4" />
+          Duplicate {item.type}
+        </DropdownMenuItem>
+        {item.slots && item.slots.length > 0 && (
+          <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+            <Copy className="mr-2 h-4 w-4" />
+            Duplicate slots structure
+          </DropdownMenuItem>
+        )}
+        <DropdownMenuSeparator />
+        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal flex items-center gap-1">
+          <Sparkles className="h-3 w-3" />
+          Suggestions
+        </DropdownMenuLabel>
+        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+          <UserPlus className="mr-2 h-4 w-4" />
+          Suggest volunteer needs
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+          <ListTodo className="mr-2 h-4 w-4" />
+          Suggest tasks
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
 function CommitteeRow({ committee }: { committee: Committee }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const hasItems = committee.items && committee.items.length > 0
@@ -455,22 +569,25 @@ function CommitteeRow({ committee }: { committee: Committee }) {
   const programs = committee.items?.filter(i => i.type === "program") || []
 
   return (
-    <li>
+    <li className="group">
       <button 
         className="flex w-full items-center justify-between px-6 py-4 text-left hover:bg-muted/50 transition-colors"
         onClick={() => hasItems && setIsExpanded(!isExpanded)}
         disabled={!hasItems}
       >
         <span className="font-medium">{committee.name}</span>
-        {hasItems ? (
-          isExpanded ? (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2">
+          <CommitteeActions committee={committee} />
+          {hasItems ? (
+            isExpanded ? (
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            )
           ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          )
-        ) : (
-          <span className="text-xs text-muted-foreground">No items yet</span>
-        )}
+            <span className="text-xs text-muted-foreground">No items yet</span>
+          )}
+        </div>
       </button>
       
       {isExpanded && committee.items && (
