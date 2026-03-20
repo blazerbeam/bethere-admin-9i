@@ -11,10 +11,16 @@ interface Volunteer {
   role?: "lead" | "co-lead" | "support"
 }
 
+interface InterestedPerson {
+  name: string
+  interest?: "lead" | "support" | "general"
+}
+
 interface Slot {
   name: string
   volunteers: Volunteer[]
   needsMore?: boolean
+  interested?: InterestedPerson[]
 }
 
 interface CommitteeItem {
@@ -74,7 +80,11 @@ const committees: Committee[] = [
             volunteers: [
               { name: "Katarina Harding", role: "lead" }
             ],
-            needsMore: true
+            needsMore: true,
+            interested: [
+              { name: "Jessica Lee", interest: "support" },
+              { name: "Priya Raman", interest: "support" }
+            ]
           },
           { 
             name: "1st Grade - Bengston", 
@@ -99,6 +109,9 @@ const committees: Committee[] = [
               { name: "Stephanie Knight", role: "lead" },
               { name: "Amy Pfieffer", role: "support" },
               { name: "Erin Kirkpatrick", role: "support" }
+            ],
+            interested: [
+              { name: "David Chen", interest: "general" }
             ]
           },
           { 
@@ -107,7 +120,12 @@ const committees: Committee[] = [
               { name: "Sonal Haladay", role: "co-lead" },
               { name: "Beth Anteparra-Naujock", role: "co-lead" }
             ],
-            needsMore: true
+            needsMore: true,
+            interested: [
+              { name: "Maria Santos", interest: "support" },
+              { name: "Tom Nguyen", interest: "support" },
+              { name: "Rachel Kim", interest: "general" }
+            ]
           },
           { 
             name: "5th Grade - Young", 
@@ -122,7 +140,11 @@ const committees: Committee[] = [
             volunteers: [
               { name: "Michelle Smigel", role: "lead" }
             ],
-            needsMore: true
+            needsMore: true,
+            interested: [
+              { name: "Amanda Foster", interest: "lead" },
+              { name: "Chris Park", interest: "support" }
+            ]
           }
         ]
       }
@@ -148,6 +170,9 @@ const committees: Committee[] = [
             volunteers: [
               { name: "Brittany Tanner" },
               { name: "Bridget Thompson" }
+            ],
+            interested: [
+              { name: "Sarah Mitchell", interest: "general" }
             ]
           },
           { 
@@ -195,7 +220,7 @@ const committees: Committee[] = [
   { name: "Run Club" },
 ]
 
-// Calculate gap stats for an item
+// Calculate gap stats for an item - ONLY based on assignments, not interested
 function getItemGapStats(item: CommitteeItem) {
   if (!item.slots) return { total: 0, open: 0, needsSupport: 0 }
   
@@ -259,6 +284,42 @@ function GapSummary({ item }: { item: CommitteeItem }) {
           {open} open
         </span>
       )}
+    </div>
+  )
+}
+
+function InterestedSection({ interested }: { interested: InterestedPerson[] }) {
+  if (!interested || interested.length === 0) return null
+
+  const leadInterest = interested.filter(p => p.interest === "lead")
+  const supportInterest = interested.filter(p => p.interest === "support")
+  const generalInterest = interested.filter(p => p.interest === "general" || !p.interest)
+
+  return (
+    <div className="mt-3 pt-3 border-t border-dashed border-muted-foreground/20">
+      <div className="text-[11px] uppercase tracking-wide text-muted-foreground/70 font-medium mb-1.5">
+        Interested
+      </div>
+      <div className="space-y-0.5 text-sm text-muted-foreground/70">
+        {leadInterest.length > 0 && (
+          <div className="flex items-baseline gap-2">
+            <span className="text-[11px] text-muted-foreground/50 w-16 shrink-0">in lead</span>
+            <span>{leadInterest.map(p => p.name).join(", ")}</span>
+          </div>
+        )}
+        {supportInterest.length > 0 && (
+          <div className="flex items-baseline gap-2">
+            <span className="text-[11px] text-muted-foreground/50 w-16 shrink-0">in support</span>
+            <span>{supportInterest.map(p => p.name).join(", ")}</span>
+          </div>
+        )}
+        {generalInterest.length > 0 && (
+          <div className="flex items-baseline gap-2">
+            <span className="text-[11px] text-muted-foreground/50 w-16 shrink-0">general</span>
+            <span>{generalInterest.map(p => p.name).join(", ")}</span>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -331,6 +392,9 @@ function SlotDisplay({ slot }: { slot: Slot }) {
           )}
         </div>
       )}
+
+      {/* Interested section - visually secondary, below assignments */}
+      <InterestedSection interested={slot.interested || []} />
     </div>
   )
 }
