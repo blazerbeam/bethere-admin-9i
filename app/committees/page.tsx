@@ -1,7 +1,34 @@
 import { AdminLayout } from "@/components/admin-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Empty, EmptyDescription, EmptyTitle } from "@/components/ui/empty"
-import { Users } from "lucide-react"
+import { ChevronRight } from "lucide-react"
+
+const committees = [
+  "Art Literacy",
+  "Book Fair",
+  "Carnival",
+  "Classroom Parent Leader",
+  "Multi Cultural",
+  "5th Grade Celebration + Fundraiser",
+  "Family Night",
+  "Falcon Outreach",
+  "Field Day",
+  "First Day School Supplies",
+  "Foundation Fundraising",
+  "Fun Run",
+  "Oregon Battle of the Books",
+  "PTO Sponsorships",
+  "Round Up / Auction",
+  "Science Fair / Art Showcase",
+  "Summer Kindergarten Playdates",
+  "Spring Dance Party",
+  "Holiday Scrip",
+  "Staff & Teacher Appreciation",
+  "Talent Showcase",
+  "Three Bees Garden",
+  "Volunteer Coordinator",
+  "Yearbook",
+  "Run Club",
+]
 
 export default function CommitteesPage() {
   return (
@@ -13,17 +40,20 @@ export default function CommitteesPage() {
         <CardHeader>
           <CardTitle>All Committees</CardTitle>
           <CardDescription>
-            Create and organize committees for your PTO activities.
+            {committees.length} committees for Forest Hills PTO activities.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Empty>
-            <Users className="h-10 w-10" />
-            <EmptyTitle>No committees yet</EmptyTitle>
-            <EmptyDescription>
-              Get started by creating your first committee.
-            </EmptyDescription>
-          </Empty>
+        <CardContent className="p-0">
+          <ul className="divide-y divide-border">
+            {committees.map((committee) => (
+              <li key={committee}>
+                <button className="flex w-full items-center justify-between px-6 py-4 text-left hover:bg-muted/50 transition-colors">
+                  <span className="font-medium">{committee}</span>
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                </button>
+              </li>
+            ))}
+          </ul>
         </CardContent>
       </Card>
     </AdminLayout>
