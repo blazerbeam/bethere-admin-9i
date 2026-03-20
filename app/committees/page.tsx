@@ -8,7 +8,7 @@ import { ChevronRight, ChevronDown, Calendar, Users, BookOpen } from "lucide-rea
 
 interface Volunteer {
   name: string
-  role?: "lead" | "support"
+  role?: "lead" | "co-lead" | "support"
 }
 
 interface Slot {
@@ -56,16 +56,73 @@ const committees: Committee[] = [
               { name: "Leia Wien", role: "lead" },
               { name: "Taryn Hatchel", role: "support" },
               { name: "Brynee Fletcher", role: "support" },
-              { name: "Joe Dobbyn", role: "support" }
+              { name: "Joe Dobbyn", role: "support" },
+              { name: "Carly Lagusis", role: "support" }
+            ]
+          },
+          { 
+            name: "Kindergarten - Leach", 
+            volunteers: [
+              { name: "Kelly Robinson", role: "lead" },
+              { name: "Erin Kirkpatrick", role: "support" },
+              { name: "Renee Canazaro", role: "support" },
+              { name: "Becca Kraus", role: "support" }
             ]
           },
           { 
             name: "1st Grade - Hertert", 
-            volunteers: []
+            volunteers: [
+              { name: "Katarina Harding", role: "lead" }
+            ],
+            needsMore: true
+          },
+          { 
+            name: "1st Grade - Bengston", 
+            volunteers: [
+              { name: "Caitlin Heitz", role: "lead" },
+              { name: "Amy Renalds", role: "support" },
+              { name: "Meena Tappouni", role: "support" }
+            ]
           },
           { 
             name: "2nd Grade - Peterson", 
-            volunteers: []
+            volunteers: [
+              { name: "Jennifer Mozinski", role: "lead" },
+              { name: "Svetlana Darling", role: "support" },
+              { name: "Jill Cabral Schinn", role: "support" },
+              { name: "Johannes Ruhl", role: "support" }
+            ]
+          },
+          { 
+            name: "3rd Grade - Miller", 
+            volunteers: [
+              { name: "Stephanie Knight", role: "lead" },
+              { name: "Amy Pfieffer", role: "support" },
+              { name: "Erin Kirkpatrick", role: "support" }
+            ]
+          },
+          { 
+            name: "4th Grade - Wright", 
+            volunteers: [
+              { name: "Sonal Haladay", role: "co-lead" },
+              { name: "Beth Anteparra-Naujock", role: "co-lead" }
+            ],
+            needsMore: true
+          },
+          { 
+            name: "5th Grade - Young", 
+            volunteers: [
+              { name: "Kate Vance", role: "lead" },
+              { name: "Esther Choo", role: "support" },
+              { name: "Jenni Shawcross", role: "support" }
+            ]
+          },
+          { 
+            name: "5th Grade - Vaughan", 
+            volunteers: [
+              { name: "Michelle Smigel", role: "lead" }
+            ],
+            needsMore: true
           }
         ]
       }
@@ -82,12 +139,24 @@ const committees: Committee[] = [
             name: "Kindergarten - Leach", 
             volunteers: [
               { name: "Lisa Boomer" },
-              { name: "Julia Daigneault" }
+              { name: "Julia Daigneault" },
+              { name: "Lindsay Amiri" }
             ]
           },
           { 
             name: "3rd Grade - Miller", 
-            volunteers: []
+            volunteers: [
+              { name: "Brittany Tanner" },
+              { name: "Bridget Thompson" }
+            ]
+          },
+          { 
+            name: "4th Grade - Bartlett", 
+            volunteers: [
+              { name: "Inna King" },
+              { name: "Nicole Woodruff" },
+              { name: "Taryn Hatchel" }
+            ]
           }
         ]
       }
@@ -153,7 +222,8 @@ function ItemTypeBadge({ type }: { type: "event" | "role" | "program" }) {
 
 function SlotDisplay({ slot }: { slot: Slot }) {
   const hasVolunteers = slot.volunteers.length > 0
-  const lead = slot.volunteers.find(v => v.role === "lead")
+  const leads = slot.volunteers.filter(v => v.role === "lead")
+  const coLeads = slot.volunteers.filter(v => v.role === "co-lead")
   const supporters = slot.volunteers.filter(v => v.role === "support")
   const unroledVolunteers = slot.volunteers.filter(v => !v.role)
 
@@ -174,17 +244,23 @@ function SlotDisplay({ slot }: { slot: Slot }) {
             variant="outline"
             className="text-xs border-amber-300 text-amber-600 bg-amber-50"
           >
-            Needs more volunteers
+            Needs support
           </Badge>
         )}
       </div>
       
       {hasVolunteers && (
         <div className="mt-1 ml-4 space-y-0.5">
-          {lead && (
+          {coLeads.length > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-muted-foreground">Co-Leads:</span>
+              <span className="text-sm">{coLeads.map(v => v.name).join(", ")}</span>
+            </div>
+          )}
+          {leads.length > 0 && (
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Lead:</span>
-              <span className="text-sm">{lead.name}</span>
+              <span className="text-sm">{leads.map(v => v.name).join(", ")}</span>
             </div>
           )}
           {supporters.length > 0 && (
