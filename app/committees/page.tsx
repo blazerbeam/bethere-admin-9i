@@ -240,6 +240,24 @@ function getItemGapStats(item: CommitteeItem) {
   return { total, open, needsSupport }
 }
 
+// Calculate gap stats for an entire committee
+function getCommitteeGapStats(committee: Committee) {
+  if (!committee.items) return { totalSlots: 0, open: 0, needsSupport: 0 }
+  
+  let totalSlots = 0
+  let open = 0
+  let needsSupport = 0
+  
+  for (const item of committee.items) {
+    const stats = getItemGapStats(item)
+    totalSlots += stats.total
+    open += stats.open
+    needsSupport += stats.needsSupport
+  }
+  
+  return { totalSlots, open, needsSupport }
+}
+
 // Sort items by urgency: open first, then needs support, then covered
 function sortItemsByNeed(items: CommitteeItem[]): CommitteeItem[] {
   return [...items].sort((a, b) => {
@@ -560,23 +578,75 @@ function ItemActions({ item }: { item: CommitteeItem }) {
   )
 }
 
+function CommitteeGapSummary({ committee }: { committee: Committee }) {
+  const { totalSlots, open, needsSupport } = getCommitteeGapStats(committee)
+  
+  // No slots to track
+  if (totalSlots === 0) return null
+  
+  // Fully covered
+  if (open === 0 && needsSupport === 0) {
+    return (
+      <span className="text-xs text-muted-foreground/60">
+        Fully covered
+      </span>
+    )
+  }
+  
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      {open > 0 && (
+        <span className="text-red-600 font-medium">
+          {open} open
+        </span>
+      )}
+      {open > 0 && needsSupport > 0 && (
+        <span className="text-muted-foreground">•</span>
+      )}
+      {needsSupport > 0 && (
+        <span className="text-amber-600 font-medium">
+          {needsSupport} need{needsSupport === 1 ? 's' : ''} support
+        </span>
+      )}
+    </div>
+  )
+}
+
 function CommitteeRow({ committee }: { committee: Committee }) {
   const [isExpanded, setIsExpanded] = useState(false)
   const hasItems = committee.items && committee.items.length > 0
+  
+  // Get gap stats for row background
+  const { open, needsSupport } = getCommitteeGapStats(committee)
 
   const events = committee.items?.filter(i => i.type === "event") || []
   const roles = committee.items?.filter(i => i.type === "role") || []
   const programs = committee.items?.filter(i => i.type === "program") || []
+  
+  // Subtle row background based on urgency
+  const rowBgClass = open > 0 
+    ? "bg-red-50/30 hover:bg-red-50/50" 
+    : needsSupport > 0 
+      ? "bg-amber-50/30 hover:bg-amber-50/50" 
+      : "hover:bg-muted/50"
 
   return (
     <li className="group">
-      <button 
-        className="flex w-full items-center justify-between px-6 py-4 text-left hover:bg-muted/50 transition-colors"
+      <div 
+        className={`flex w-full items-center justify-between px-6 py-4 text-left transition-colors cursor-pointer ${rowBgClass} ${!hasItems ? 'cursor-default' : ''}`}
         onClick={() => hasItems && setIsExpanded(!isExpanded)}
-        disabled={!hasItems}
+        role="button"
+        tabIndex={hasItems ? 0 : -1}
+        onKeyDown={(e) => {
+          if (hasItems && (e.key === 'Enter' || e.key === ' ')) {
+            e.preventDefault()
+            setIsExpanded(!isExpanded)
+          }
+        }}
       >
         <span className="font-medium">{committee.name}</span>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          <CommitteeGapSummary committee={committee} />
           <CommitteeActions committee={committee} />
           {hasItems ? (
             isExpanded ? (
@@ -588,7 +658,7 @@ function CommitteeRow({ committee }: { committee: Committee }) {
             <span className="text-xs text-muted-foreground">No items yet</span>
           )}
         </div>
-      </button>
+      </div>
       
       {isExpanded && committee.items && (
         <div className="border-t bg-muted/20 px-6 py-6">
