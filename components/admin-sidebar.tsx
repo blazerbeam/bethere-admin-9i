@@ -29,7 +29,7 @@ export function AdminSidebar() {
   return (
     <aside className="flex h-screen w-56 flex-col border-r border-border bg-sidebar">
       <div className="flex h-14 items-center border-b border-border px-4">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/dashboard" className="flex items-center gap-2">
           <span className="text-lg font-semibold text-sidebar-foreground">
             BeThere
           </span>
