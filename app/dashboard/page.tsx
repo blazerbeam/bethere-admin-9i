@@ -1,7 +1,10 @@
+"use client"
+
 import { AdminLayout } from "@/components/admin-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Users, Calendar, HandHeart, MapPin, Clock, AlertTriangle, UserX, FileText, ArrowRight } from "lucide-react"
+import { UrgentNeedModal } from "@/components/urgent-need-modal"
+import { Users, Calendar, HandHeart, MapPin, Clock, UserX, FileText, ArrowRight, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 
 const quickStats = [
@@ -82,12 +85,7 @@ export default function DashboardPage() {
     <AdminLayout 
       title="Dashboard" 
       description="Forest Hills Elementary PTO — Here's what needs your attention today."
-      headerAction={
-        <Button className="bg-orange-500 hover:bg-orange-600 text-white font-medium">
-          <AlertTriangle className="h-4 w-4" />
-          Urgent Need
-        </Button>
-      }
+      headerAction={<UrgentNeedModal />}
     >
       <div className="space-y-6">
         {/* Quick Stats Row */}
