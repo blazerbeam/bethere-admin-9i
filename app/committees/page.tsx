@@ -78,43 +78,42 @@ interface BoardRole {
 const boardRoles: BoardRole[] = [
   { 
     title: "President", 
-    assignee: "Sarah Mitchell",
+    assignee: "Shaun Swenson",
     needsSuccessor: true,
     interested: [
-      { name: "David Chen", interest: "lead", tags: ["frequent"] }
+      { name: "Jeremy Myrland", interest: "lead", tags: ["frequent"] }
     ]
   },
   { 
     title: "Vice President", 
-    assignee: "David Chen",
-    interested: [
-      { name: "Amanda Foster", interest: "lead", tags: ["frequent"] }
-    ]
-  },
-  { 
-    title: "Treasurer", 
-    assignee: "Jennifer Mozinski",
+    assignee: "Jeremy Myrland",
     interested: []
   },
   { 
     title: "Secretary", 
-    assignee: null,
-    interested: [
-      { name: "Priya Raman", interest: "lead", tags: ["new-parent"] },
-      { name: "Kate Vance", interest: "general", tags: ["frequent", "previously-assigned"] }
-    ]
-  },
-  { 
-    title: "Communications", 
-    assignee: "Stephanie Knight",
+    assignee: "Kathryn Kuntz",
+    needsSuccessor: true,
     interested: []
   },
   { 
-    title: "Fundraising Chair", 
-    assignee: null,
-    interested: [
-      { name: "Maria Santos", interest: "lead", tags: ["frequent"] }
-    ]
+    title: "Communications", 
+    assignee: "Iris Ringer",
+    interested: []
+  },
+  { 
+    title: "Volunteer Coordinator", 
+    assignee: "Gretchen McClaughry",
+    interested: []
+  },
+  { 
+    title: "Treasurer", 
+    assignee: "Kyle Renalds",
+    interested: []
+  },
+  { 
+    title: "Treasurer", 
+    assignee: "Brianna O'Gorman",
+    interested: []
   },
 ]
 
@@ -596,7 +595,7 @@ function AtAGlanceSummary({
     {
       id: "needs-support" as FilterType,
       label: "Roles needing help",
-      value: stats.rolesNeedingSupport,
+      value: stats.rolesNeedingSupport + stats.boardNeedingSuccessors,
       icon: AlertTriangle,
       color: "text-red-600",
       bgColor: "bg-red-50 hover:bg-red-100 border-red-200",
