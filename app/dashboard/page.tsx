@@ -4,7 +4,7 @@ import { AdminLayout } from "@/components/admin-layout"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { UrgentNeedModal } from "@/components/urgent-need-modal"
-import { Users, Calendar, HandHeart, MapPin, Clock, UserX, FileText, ArrowRight } from "lucide-react"
+import { Users, Calendar, HandHeart, MapPin, Clock, UserX, FileText, ArrowRight, AlertTriangle } from "lucide-react"
 import Link from "next/link"
 
 const quickStats = [
