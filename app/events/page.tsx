@@ -8,16 +8,14 @@ import { Button } from "@/components/ui/button"
 import { 
   Calendar, 
   Plus, 
-  Sparkles, 
-  Tags, 
-  UserPlus, 
-  ListTodo, 
   Clock,
   MapPin,
   MoreHorizontal,
   Copy,
-  ChevronRight,
-  Lightbulb
+  Pencil,
+  Eye,
+  Archive,
+  Check
 } from "lucide-react"
 import {
   DropdownMenu,
@@ -25,7 +23,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 import {
   Dialog,
@@ -38,48 +35,72 @@ import {
 import { Input } from "@/components/ui/input"
 import { FieldGroup, Field, FieldLabel } from "@/components/ui/field"
 
+type EventStatus = "draft" | "published" | "needs_volunteers"
+
 interface Event {
   id: string
   name: string
   date?: string
   location?: string
   committee?: string
-  suggestedRoles?: string[]
-  suggestedTasks?: string[]
-  suggestedTags?: string[]
+  status: EventStatus
 }
 
-const sampleEvents: Event[] = [
+const initialEvents: Event[] = [
   {
     id: "1",
-    name: "Fall Book Fair",
-    date: "October 15-19, 2024",
-    location: "School Library",
-    committee: "Book Fair",
-    suggestedRoles: ["Setup Crew", "Cashier", "Inventory Manager", "Cleanup Crew"],
-    suggestedTasks: ["Order books from vendor", "Set up display tables", "Create volunteer schedule", "Count cash drawer"],
-    suggestedTags: ["fundraiser", "literacy", "fall"]
+    name: "Falcon Fun Run",
+    date: "October 8, 2024",
+    location: "School Track",
+    committee: "Fun Run",
+    status: "needs_volunteers"
   },
   {
     id: "2",
-    name: "Annual Fun Run",
-    date: "May 10, 2025",
-    location: "School Track",
-    committee: "Fun Run",
-    suggestedRoles: ["Course Marshal", "Registration", "Water Station", "Finish Line"],
-    suggestedTasks: ["Mark course route", "Order t-shirts", "Set up water stations", "Prepare awards"],
-    suggestedTags: ["fundraiser", "fitness", "spring", "outdoor"]
+    name: "Scholastic Book Fair",
+    date: "October 27-31, 2024",
+    location: "School Library",
+    committee: "Book Fair",
+    status: "draft"
   },
   {
     id: "3",
     name: "Spring Dance Party",
     date: "April 5, 2025",
     location: "Gymnasium",
-    committee: "Spring Dance Party"
+    committee: "Spring Dance Party",
+    status: "draft"
+  },
+  {
+    id: "4",
+    name: "Science Night",
+    date: "November 15, 2024",
+    location: "School Cafeteria",
+    committee: "STEM",
+    status: "draft"
   }
 ]
 
-function EventActions({ event }: { event: Event }) {
+function StatusBadge({ status }: { status: EventStatus }) {
+  switch (status) {
+    case "draft":
+      return <Badge variant="secondary" className="text-xs">Draft</Badge>
+    case "published":
+      return <Badge className="text-xs bg-green-100 text-green-800 hover:bg-green-100">Published</Badge>
+    case "needs_volunteers":
+      return <Badge className="text-xs bg-orange-100 text-orange-800 hover:bg-orange-100">Needs Volunteers</Badge>
+  }
+}
+
+function EventActions({ 
+  event, 
+  onCopy, 
+  onPublish 
+}: { 
+  event: Event
+  onCopy: (event: Event) => void
+  onPublish: (event: Event) => void
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -93,133 +114,51 @@ function EventActions({ event }: { event: Event }) {
           <span className="sr-only">Event actions</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal">
-          Actions
-        </DropdownMenuLabel>
+      <DropdownMenuContent align="end" className="w-48">
         <DropdownMenuItem>
+          <Pencil className="mr-2 h-4 w-4" />
+          Edit
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => onCopy(event)}>
           <Copy className="mr-2 h-4 w-4" />
-          Duplicate event
+          Copy event
         </DropdownMenuItem>
         <DropdownMenuItem>
-          <Copy className="mr-2 h-4 w-4" />
-          Duplicate as template
+          <Eye className="mr-2 h-4 w-4" />
+          View responses
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuLabel className="text-xs text-muted-foreground font-normal flex items-center gap-1">
-          <Sparkles className="h-3 w-3" />
-          Generate suggestions
-        </DropdownMenuLabel>
         <DropdownMenuItem>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Suggest volunteer roles
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <ListTodo className="mr-2 h-4 w-4" />
-          Suggest tasks
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Tags className="mr-2 h-4 w-4" />
-          Suggest tags
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Lightbulb className="mr-2 h-4 w-4" />
-          Suggest support needs
+          <Archive className="mr-2 h-4 w-4" />
+          Archive
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
 
-function SuggestionsPreview({ event }: { event: Event }) {
-  const hasSuggestions = event.suggestedRoles || event.suggestedTasks || event.suggestedTags
-  
-  if (!hasSuggestions) {
-    return (
-      <div className="mt-4 pt-4 border-t border-dashed">
-        <Button variant="outline" size="sm" className="text-xs gap-1.5">
-          <Sparkles className="h-3.5 w-3.5" />
-          Generate suggestions
-        </Button>
-      </div>
-    )
-  }
+function EventCard({ 
+  event, 
+  onCopy, 
+  onPublish,
+  copyConfirmation
+}: { 
+  event: Event
+  onCopy: (event: Event) => void
+  onPublish: (event: Event) => void
+  copyConfirmation: string | null
+}) {
+  const showCopyConfirm = copyConfirmation === event.id
 
-  return (
-    <div className="mt-4 pt-4 border-t border-dashed space-y-3">
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-        <Sparkles className="h-3 w-3" />
-        <span className="font-medium uppercase tracking-wide">AI Suggestions</span>
-      </div>
-      
-      {event.suggestedTags && (
-        <div>
-          <div className="text-[11px] text-muted-foreground mb-1">Tags</div>
-          <div className="flex flex-wrap gap-1.5">
-            {event.suggestedTags.map((tag, idx) => (
-              <Badge 
-                key={idx} 
-                variant="outline" 
-                className="text-xs bg-muted/50 border-dashed cursor-pointer hover:bg-muted"
-              >
-                {tag}
-                <span className="ml-1 text-muted-foreground">+</span>
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {event.suggestedRoles && (
-        <div>
-          <div className="text-[11px] text-muted-foreground mb-1">Volunteer Roles</div>
-          <div className="flex flex-wrap gap-1.5">
-            {event.suggestedRoles.map((role, idx) => (
-              <Badge 
-                key={idx} 
-                variant="outline" 
-                className="text-xs bg-blue-50/50 border-blue-200 border-dashed text-blue-700 cursor-pointer hover:bg-blue-100/50"
-              >
-                {role}
-                <span className="ml-1 text-blue-400">+</span>
-              </Badge>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {event.suggestedTasks && (
-        <div>
-          <div className="text-[11px] text-muted-foreground mb-1">Tasks</div>
-          <ul className="space-y-1">
-            {event.suggestedTasks.slice(0, 3).map((task, idx) => (
-              <li key={idx} className="flex items-center gap-2 text-sm text-muted-foreground">
-                <div className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40" />
-                <span>{task}</span>
-                <button className="ml-auto text-xs text-primary hover:underline">Add</button>
-              </li>
-            ))}
-            {event.suggestedTasks.length > 3 && (
-              <li className="text-xs text-muted-foreground pl-3.5">
-                +{event.suggestedTasks.length - 3} more
-              </li>
-            )}
-          </ul>
-        </div>
-      )}
-    </div>
-  )
-}
-
-function EventCard({ event }: { event: Event }) {
   return (
     <div className="group border rounded-lg p-4 hover:bg-muted/30 transition-colors">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-medium truncate">{event.name}</h3>
+            <StatusBadge status={event.status} />
             {event.committee && (
-              <Badge variant="secondary" className="text-xs shrink-0">
+              <Badge variant="outline" className="text-xs shrink-0">
                 {event.committee}
               </Badge>
             )}
@@ -239,15 +178,29 @@ function EventCard({ event }: { event: Event }) {
               </span>
             )}
           </div>
+
+          {showCopyConfirm && (
+            <div className="mt-2 flex items-center gap-1.5 text-sm text-green-700">
+              <Check className="h-3.5 w-3.5" />
+              Copied as draft: &quot;{event.name} (Copy)&quot;
+            </div>
+          )}
         </div>
         
-        <div className="flex items-center gap-1">
-          <EventActions event={event} />
-          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-2">
+          {event.status === "draft" && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="text-orange-600 border-orange-300 hover:bg-orange-50 hover:text-orange-700"
+              onClick={() => onPublish(event)}
+            >
+              Publish
+            </Button>
+          )}
+          <EventActions event={event} onCopy={onCopy} onPublish={onPublish} />
         </div>
       </div>
-
-      <SuggestionsPreview event={event} />
     </div>
   )
 }
@@ -267,7 +220,7 @@ function CreateEventDialog() {
         <DialogHeader>
           <DialogTitle>Create Event</DialogTitle>
           <DialogDescription>
-            Add a new event. You can generate suggestions after creating.
+            Add a new event. It will be saved as a draft.
           </DialogDescription>
         </DialogHeader>
         
@@ -282,33 +235,6 @@ function CreateEventDialog() {
           </Field>
         </FieldGroup>
 
-        {eventName.length > 3 && (
-          <div className="rounded-lg border border-dashed p-4 bg-muted/30">
-            <div className="flex items-center gap-1.5 text-sm font-medium mb-3">
-              <Sparkles className="h-4 w-4 text-primary" />
-              Quick suggestions available
-            </div>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <button className="flex items-center gap-2 hover:text-foreground transition-colors w-full text-left">
-                <UserPlus className="h-4 w-4" />
-                Generate likely volunteer roles
-              </button>
-              <button className="flex items-center gap-2 hover:text-foreground transition-colors w-full text-left">
-                <ListTodo className="h-4 w-4" />
-                Generate task checklist
-              </button>
-              <button className="flex items-center gap-2 hover:text-foreground transition-colors w-full text-left">
-                <Tags className="h-4 w-4" />
-                Suggest relevant tags
-              </button>
-              <button className="flex items-center gap-2 hover:text-foreground transition-colors w-full text-left">
-                <Calendar className="h-4 w-4" />
-                Find similar past events
-              </button>
-            </div>
-          </div>
-        )}
-
         <div className="flex justify-end gap-2 pt-2">
           <Button variant="outline">Cancel</Button>
           <Button disabled={!eventName}>Create Event</Button>
@@ -319,6 +245,33 @@ function CreateEventDialog() {
 }
 
 export default function EventsPage() {
+  const [events, setEvents] = useState<Event[]>(initialEvents)
+  const [copyConfirmation, setCopyConfirmation] = useState<string | null>(null)
+
+  const handleCopyEvent = (event: Event) => {
+    const newEvent: Event = {
+      ...event,
+      id: `copy-${Date.now()}`,
+      name: `${event.name} (Copy)`,
+      status: "draft"
+    }
+    setEvents([newEvent, ...events])
+    setCopyConfirmation(newEvent.id)
+    
+    // Clear confirmation after 3 seconds
+    setTimeout(() => {
+      setCopyConfirmation(null)
+    }, 3000)
+  }
+
+  const handlePublishEvent = (event: Event) => {
+    setEvents(events.map(e => 
+      e.id === event.id 
+        ? { ...e, status: "published" as EventStatus }
+        : e
+    ))
+  }
+
   return (
     <AdminLayout 
       title="Events" 
@@ -336,8 +289,14 @@ export default function EventsPage() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {sampleEvents.map((event) => (
-              <EventCard key={event.id} event={event} />
+            {events.map((event) => (
+              <EventCard 
+                key={event.id} 
+                event={event} 
+                onCopy={handleCopyEvent}
+                onPublish={handlePublishEvent}
+                copyConfirmation={copyConfirmation}
+              />
             ))}
           </div>
         </CardContent>
