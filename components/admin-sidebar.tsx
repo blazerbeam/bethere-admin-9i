@@ -2,10 +2,15 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Users, Calendar, HandHeart } from "lucide-react"
+import { Users, Calendar, HandHeart, LayoutGrid } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const navItems = [
+  {
+    label: "Dashboard",
+    href: "/dashboard",
+    icon: LayoutGrid,
+  },
   {
     label: "Committees",
     href: "/committees",
