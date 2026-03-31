@@ -1682,13 +1682,13 @@ function BoardLeadershipSection({
       </CardHeader>
       <CardContent>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {visibleRoles.map((role) => {
+          {visibleRoles.map((role, index) => {
             const isOpen = !role.assignee
             const hasInterested = role.interested && role.interested.length > 0
             
             return (
               <div 
-                key={role.title}
+                key={`${role.title}-${index}`}
                 className={`rounded-lg border p-4 transition-colors ${
                   isOpen 
                     ? "bg-red-50/60 border-red-200" 
