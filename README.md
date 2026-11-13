@@ -1,35 +1,40 @@
-# bethere-admin-9i
+# BeThere admin prototype
 
-This is a [Next.js](https://nextjs.org) project bootstrapped with [v0](https://v0.app).
+A clickable design prototype of the PTO side of BeThere: the screens a volunteer
+chair would use to see which needs are still open, manage committees and events,
+and post an urgent ask. Live at [v0-bethere-admin.vercel.app](https://v0-bethere-admin.vercel.app).
 
-## Built with v0
+It uses sample data and has no backend. It was built in [v0](https://v0.app) in late
+March 2026 (35 commits), alongside the parent-facing
+[BeThere prototype](https://github.com/blazerbeam/v0-be-there-app), to work out what
+a chair actually needs to see before building any of it for real.
 
-This repository is linked to a [v0](https://v0.app) project. You can continue developing by visiting the link below -- start new chats to make changes, and v0 will push commits directly to this repo. Every merge to `main` will automatically deploy.
+## What happened next
 
-[Continue working on v0 →](https://v0.app/chat/projects/prj_AH7TSdF3Hug982H4SOuhuUmWOjvv)
+BeThere shipped as part of [Roost](https://roost.directory), the parent directory I
+build and run. The chair view was rebuilt there on real data: the families,
+committees, events and permissions Roost already holds. The story of how the idea
+got there is in the
+[BeThere prototype README](https://github.com/blazerbeam/v0-be-there-app#readme).
 
-## Getting Started
+This repo is a snapshot and gets no new features.
 
-First, run the development server:
+## Screens
+
+- `/dashboard`: open needs, quick stats, and what needs attention
+- `/opportunities`: volunteer opportunities and who's signed up
+- `/events`: events and their shifts
+- `/committees`: committees and chairs
+
+## Running it locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
 pnpm dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+No environment variables needed.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-## Learn More
-
-To learn more, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-- [v0 Documentation](https://v0.app/docs) - learn about v0 and how to use it.
-
-<a href="https://v0.app/chat/api/kiro/clone/blazerbeam/bethere-admin-9i" alt="Open in Kiro"><img src="https://pdgvvgmkdvyeydso.public.blob.vercel-storage.com/open%20in%20kiro.svg?sanitize=true" /></a>
+Built by [Jeremy Myrland](https://jeremymyrland.com).
